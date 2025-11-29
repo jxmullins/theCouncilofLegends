@@ -1,0 +1,12 @@
+{
+    "topic": "What is the single most important quality for a software developer?",
+    "mode": "collaborative",
+    "rounds": 2,
+    "started_at": "2025-11-29 12:15:20",
+    "config": {
+        "claude_model": "sonnet",
+        "codex_model": "gpt-4o",
+        "gemini_model": "gemini-2.5-flash",
+        "turn_timeout": 120
+    }
+}

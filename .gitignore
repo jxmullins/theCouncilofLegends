@@ -1,0 +1,15 @@
+# Temporary files
+tmp/
+*.tmp
+*.err
+
+# OS files
+.DS_Store
+
+# Editor files
+*.swp
+*.swo
+*~
+
+# Debate outputs (optional - uncomment to ignore)
+# debates/
