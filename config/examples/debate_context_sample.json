@@ -1,0 +1,233 @@
+{
+  "debate_id": "20251201_153045_oauth_security_refactor",
+  "topic": "Should we refactor our authentication system from session-based to OAuth 2.0 with JWT tokens?",
+  "topic_summary": "Technical and security decision about authentication architecture migration",
+  "created_at": "2025-12-01T15:30:45Z",
+  "assessment_id": "20251201_143022",
+
+  "topic_analysis": {
+    "analyst": {
+      "id": "arbiter",
+      "model_name": "llama-3.1-70b",
+      "model_version": "3.1-70b"
+    },
+    "analyzed_at": "2025-12-01T15:31:02Z",
+    "category_relevance": [
+      {
+        "category_id": "reasoning_logic",
+        "relevance": 0.6,
+        "reasoning": "Logical analysis needed for trade-offs, but not the primary focus"
+      },
+      {
+        "category_id": "legal_ethical",
+        "relevance": 0.3,
+        "reasoning": "Minor privacy/data protection considerations, but primarily a technical decision"
+      },
+      {
+        "category_id": "argumentation",
+        "relevance": 0.5,
+        "reasoning": "Need to weigh pros/cons of different approaches"
+      },
+      {
+        "category_id": "domain_knowledge",
+        "relevance": 0.7,
+        "reasoning": "Security and technology domain knowledge important",
+        "item_relevance": [
+          { "item_id": "science_technology", "relevance": 0.9 },
+          { "item_id": "law_legal_systems", "relevance": 0.2 }
+        ]
+      },
+      {
+        "category_id": "programming_languages",
+        "relevance": 0.9,
+        "reasoning": "Core technical decision requiring deep programming knowledge",
+        "subcategory_relevance": [
+          {
+            "subcategory_id": "established_modern",
+            "relevance": 0.95,
+            "reasoning": "OAuth/JWT implementations typically in JavaScript, Python, Java, Go"
+          },
+          {
+            "subcategory_id": "legacy_classic",
+            "relevance": 0.3,
+            "reasoning": "Less relevant unless dealing with legacy system integration"
+          },
+          {
+            "subcategory_id": "emerging_current",
+            "relevance": 0.6,
+            "reasoning": "Rust/Go increasingly used for auth services"
+          }
+        ],
+        "item_relevance": [
+          { "item_id": "javascript_typescript", "relevance": 0.95 },
+          { "item_id": "python", "relevance": 0.8 },
+          { "item_id": "java", "relevance": 0.7 },
+          { "item_id": "go", "relevance": 0.8 },
+          { "item_id": "rust", "relevance": 0.6 },
+          { "item_id": "sql", "relevance": 0.7 }
+        ]
+      },
+      {
+        "category_id": "accessibility_inclusive_design",
+        "relevance": 0.2,
+        "reasoning": "Auth UX has accessibility implications but not central to this architectural decision"
+      },
+      {
+        "category_id": "communication",
+        "relevance": 0.4,
+        "reasoning": "Need to explain technical trade-offs clearly"
+      },
+      {
+        "category_id": "meta_cognition",
+        "relevance": 0.5,
+        "reasoning": "Acknowledging security unknowns and limitations is important"
+      },
+      {
+        "category_id": "collaboration",
+        "relevance": 0.4,
+        "reasoning": "Standard collaborative discussion"
+      }
+    ],
+    "topic_keywords": [
+      "OAuth 2.0",
+      "JWT",
+      "authentication",
+      "session management",
+      "security",
+      "API design",
+      "tokens",
+      "authorization",
+      "refactoring"
+    ],
+    "analysis_notes": "This is primarily a technical/security decision. Programming expertise (especially in web technologies) and security domain knowledge should be weighted heavily. Ethical/legal considerations are secondary."
+  },
+
+  "context_weighted_rankings": {
+    "calculated_at": "2025-12-01T15:31:15Z",
+    "methodology": "Weighted sum of category scores using topic relevance weights. Formula: sum(category_score * relevance_weight) / sum(relevance_weight). CJ suitability combines context score (70%) with baseline CJ score (30%).",
+    "rankings": [
+      {
+        "model_id": "codex",
+        "context_rank": 1,
+        "context_weighted_score": 8.72,
+        "baseline_score": 7.85,
+        "score_delta": 0.87,
+        "relevant_category_scores": {
+          "programming_languages": {
+            "score": 9.20,
+            "relevance_weight": 0.9,
+            "weighted_contribution": 8.28
+          },
+          "domain_knowledge": {
+            "score": 7.50,
+            "relevance_weight": 0.7,
+            "weighted_contribution": 5.25
+          },
+          "reasoning_logic": {
+            "score": 7.90,
+            "relevance_weight": 0.6,
+            "weighted_contribution": 4.74
+          },
+          "meta_cognition": {
+            "score": 7.00,
+            "relevance_weight": 0.5,
+            "weighted_contribution": 3.50
+          },
+          "argumentation": {
+            "score": 7.50,
+            "relevance_weight": 0.5,
+            "weighted_contribution": 3.75
+          }
+        },
+        "chief_justice_suitability": 7.51
+      },
+      {
+        "model_id": "claude",
+        "context_rank": 2,
+        "context_weighted_score": 7.89,
+        "baseline_score": 8.45,
+        "score_delta": -0.56,
+        "relevant_category_scores": {
+          "programming_languages": {
+            "score": 7.20,
+            "relevance_weight": 0.9,
+            "weighted_contribution": 6.48
+          },
+          "domain_knowledge": {
+            "score": 8.00,
+            "relevance_weight": 0.7,
+            "weighted_contribution": 5.60
+          },
+          "reasoning_logic": {
+            "score": 8.25,
+            "relevance_weight": 0.6,
+            "weighted_contribution": 4.95
+          },
+          "meta_cognition": {
+            "score": 8.75,
+            "relevance_weight": 0.5,
+            "weighted_contribution": 4.38
+          },
+          "argumentation": {
+            "score": 8.75,
+            "relevance_weight": 0.5,
+            "weighted_contribution": 4.38
+          }
+        },
+        "chief_justice_suitability": 8.12
+      },
+      {
+        "model_id": "gemini",
+        "context_rank": 3,
+        "context_weighted_score": 7.68,
+        "baseline_score": 7.65,
+        "score_delta": 0.03,
+        "relevant_category_scores": {
+          "programming_languages": {
+            "score": 7.60,
+            "relevance_weight": 0.9,
+            "weighted_contribution": 6.84
+          },
+          "domain_knowledge": {
+            "score": 7.80,
+            "relevance_weight": 0.7,
+            "weighted_contribution": 5.46
+          },
+          "reasoning_logic": {
+            "score": 8.00,
+            "relevance_weight": 0.6,
+            "weighted_contribution": 4.80
+          },
+          "meta_cognition": {
+            "score": 7.25,
+            "relevance_weight": 0.5,
+            "weighted_contribution": 3.63
+          },
+          "argumentation": {
+            "score": 7.50,
+            "relevance_weight": 0.5,
+            "weighted_contribution": 3.75
+          }
+        },
+        "chief_justice_suitability": 7.33
+      }
+    ],
+    "recommended_chief_justice": "codex",
+    "recommendation_reasoning": "For this OAuth/JWT authentication refactoring decision, Codex scores highest on the most relevant categories: programming languages (9.20) and technical implementation. While Claude has higher baseline CJ suitability (ethics, meta-cognition), this debate centers on technical trade-offs where Codex's expertise is most valuable. Codex should lead deliberations to ensure technical accuracy, with Claude providing ethical/security perspective and Gemini contributing balanced analysis.",
+    "ranking_table_markdown": "| Context Rank | Model  | Context Score | Baseline | Delta  | CJ Suitability | Key Relevant Strengths        |\n|--------------|--------|---------------|----------|--------|----------------|-------------------------------|\n| 1            | Codex  | 8.72          | 7.85     | +0.87  | 7.51           | Programming (9.2), SQL, APIs  |\n| 2            | Claude | 7.89          | 8.45     | -0.56  | 8.12           | Reasoning, Meta-cog, Security |\n| 3            | Gemini | 7.68          | 7.65     | +0.03  | 7.33           | Balanced, Science/Tech        |"
+  },
+
+  "user_decision": {
+    "decided_at": "2025-12-01T15:32:00Z",
+    "accepted_recommendation": true,
+    "selected_chief_justice": "codex",
+    "override_reason": null
+  },
+
+  "mini_questionnaire_triggered": {
+    "triggered": false,
+    "reason": null,
+    "new_topic_id": null,
+    "mini_questionnaire_id": null
+  }
+}

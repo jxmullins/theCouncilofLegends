@@ -1,0 +1,244 @@
+{
+  "debate_id": "20251201_160122_facial_recognition_ethics",
+  "topic": "Should our company implement facial recognition for employee time tracking?",
+  "topic_summary": "Ethical and legal decision about biometric surveillance in the workplace",
+  "created_at": "2025-12-01T16:01:22Z",
+  "assessment_id": "20251201_143022",
+
+  "topic_analysis": {
+    "analyst": {
+      "id": "arbiter",
+      "model_name": "llama-3.1-70b",
+      "model_version": "3.1-70b"
+    },
+    "analyzed_at": "2025-12-01T16:01:45Z",
+    "category_relevance": [
+      {
+        "category_id": "reasoning_logic",
+        "relevance": 0.6,
+        "reasoning": "Logical analysis of arguments for and against"
+      },
+      {
+        "category_id": "legal_ethical",
+        "relevance": 0.95,
+        "reasoning": "Primary focus - privacy rights, consent, workplace ethics, legal compliance",
+        "item_relevance": [
+          { "item_id": "balancing_rights", "relevance": 1.0 },
+          { "item_id": "ethical_dilemmas", "relevance": 1.0 },
+          { "item_id": "applying_precedent", "relevance": 0.7 },
+          { "item_id": "constitutional_interpretation", "relevance": 0.6 }
+        ]
+      },
+      {
+        "category_id": "argumentation",
+        "relevance": 0.8,
+        "reasoning": "Steelmanning both employer and employee perspectives critical",
+        "item_relevance": [
+          { "item_id": "steelmanning", "relevance": 0.95 },
+          { "item_id": "synthesizing_viewpoints", "relevance": 0.9 },
+          { "item_id": "persuasive_arguments", "relevance": 0.7 }
+        ]
+      },
+      {
+        "category_id": "domain_knowledge",
+        "relevance": 0.7,
+        "reasoning": "Need understanding of privacy law, labor relations, technology",
+        "item_relevance": [
+          { "item_id": "law_legal_systems", "relevance": 0.9 },
+          { "item_id": "philosophy_ethics", "relevance": 0.9 },
+          { "item_id": "science_technology", "relevance": 0.6 },
+          { "item_id": "history_social_systems", "relevance": 0.5 }
+        ]
+      },
+      {
+        "category_id": "programming_languages",
+        "relevance": 0.1,
+        "reasoning": "Technical implementation is not the focus of this ethical debate"
+      },
+      {
+        "category_id": "accessibility_inclusive_design",
+        "relevance": 0.7,
+        "reasoning": "Facial recognition has known bias issues affecting people with disabilities and different skin tones",
+        "subcategory_relevance": [
+          {
+            "subcategory_id": "visual_accessibility",
+            "relevance": 0.6,
+            "reasoning": "System may not work for employees with facial differences"
+          },
+          {
+            "subcategory_id": "cognitive_accessibility",
+            "relevance": 0.5,
+            "reasoning": "Understanding consent and opting out"
+          },
+          {
+            "subcategory_id": "legal_compliance",
+            "relevance": 0.85,
+            "reasoning": "ADA implications of biometric systems"
+          }
+        ]
+      },
+      {
+        "category_id": "communication",
+        "relevance": 0.5,
+        "reasoning": "Need to articulate nuanced positions clearly"
+      },
+      {
+        "category_id": "meta_cognition",
+        "relevance": 0.8,
+        "reasoning": "Acknowledging uncertainty, recognizing biases, knowing limits critical for ethical deliberation",
+        "item_relevance": [
+          { "item_id": "acknowledging_uncertainty", "relevance": 0.9 },
+          { "item_id": "recognizing_biases", "relevance": 0.95 },
+          { "item_id": "knowing_limits", "relevance": 0.8 }
+        ]
+      },
+      {
+        "category_id": "collaboration",
+        "relevance": 0.6,
+        "reasoning": "Finding common ground between different stakeholder perspectives"
+      }
+    ],
+    "topic_keywords": [
+      "facial recognition",
+      "biometrics",
+      "employee privacy",
+      "workplace surveillance",
+      "consent",
+      "GDPR",
+      "BIPA",
+      "discrimination",
+      "algorithmic bias",
+      "labor rights"
+    ],
+    "analysis_notes": "This is primarily an ethical/legal decision with significant accessibility implications due to known facial recognition bias. Technical programming ability is nearly irrelevant. Strong ethical reasoning, bias awareness, and ability to balance competing rights are critical."
+  },
+
+  "context_weighted_rankings": {
+    "calculated_at": "2025-12-01T16:02:00Z",
+    "methodology": "Weighted sum of category scores using topic relevance weights. Formula: sum(category_score * relevance_weight) / sum(relevance_weight). CJ suitability combines context score (70%) with baseline CJ score (30%).",
+    "rankings": [
+      {
+        "model_id": "claude",
+        "context_rank": 1,
+        "context_weighted_score": 8.61,
+        "baseline_score": 8.45,
+        "score_delta": 0.16,
+        "relevant_category_scores": {
+          "legal_ethical": {
+            "score": 8.50,
+            "relevance_weight": 0.95,
+            "weighted_contribution": 8.08
+          },
+          "argumentation": {
+            "score": 8.75,
+            "relevance_weight": 0.8,
+            "weighted_contribution": 7.00
+          },
+          "meta_cognition": {
+            "score": 8.75,
+            "relevance_weight": 0.8,
+            "weighted_contribution": 7.00
+          },
+          "accessibility_inclusive_design": {
+            "score": 7.50,
+            "relevance_weight": 0.7,
+            "weighted_contribution": 5.25
+          },
+          "domain_knowledge": {
+            "score": 8.00,
+            "relevance_weight": 0.7,
+            "weighted_contribution": 5.60
+          }
+        },
+        "chief_justice_suitability": 8.83
+      },
+      {
+        "model_id": "gemini",
+        "context_rank": 2,
+        "context_weighted_score": 7.52,
+        "baseline_score": 7.65,
+        "score_delta": -0.13,
+        "relevant_category_scores": {
+          "legal_ethical": {
+            "score": 7.00,
+            "relevance_weight": 0.95,
+            "weighted_contribution": 6.65
+          },
+          "argumentation": {
+            "score": 7.50,
+            "relevance_weight": 0.8,
+            "weighted_contribution": 6.00
+          },
+          "meta_cognition": {
+            "score": 7.25,
+            "relevance_weight": 0.8,
+            "weighted_contribution": 5.80
+          },
+          "accessibility_inclusive_design": {
+            "score": 7.00,
+            "relevance_weight": 0.7,
+            "weighted_contribution": 4.90
+          },
+          "domain_knowledge": {
+            "score": 7.80,
+            "relevance_weight": 0.7,
+            "weighted_contribution": 5.46
+          }
+        },
+        "chief_justice_suitability": 7.39
+      },
+      {
+        "model_id": "codex",
+        "context_rank": 3,
+        "context_weighted_score": 6.89,
+        "baseline_score": 7.85,
+        "score_delta": -0.96,
+        "relevant_category_scores": {
+          "legal_ethical": {
+            "score": 6.50,
+            "relevance_weight": 0.95,
+            "weighted_contribution": 6.18
+          },
+          "argumentation": {
+            "score": 7.50,
+            "relevance_weight": 0.8,
+            "weighted_contribution": 6.00
+          },
+          "meta_cognition": {
+            "score": 7.00,
+            "relevance_weight": 0.8,
+            "weighted_contribution": 5.60
+          },
+          "accessibility_inclusive_design": {
+            "score": 6.50,
+            "relevance_weight": 0.7,
+            "weighted_contribution": 4.55
+          },
+          "domain_knowledge": {
+            "score": 7.00,
+            "relevance_weight": 0.7,
+            "weighted_contribution": 4.90
+          }
+        },
+        "chief_justice_suitability": 6.27
+      }
+    ],
+    "recommended_chief_justice": "claude",
+    "recommendation_reasoning": "For this ethical decision about workplace facial recognition, Claude is the clear choice. Claude excels in the most relevant categories: ethical reasoning (8.50), meta-cognition including bias recognition (8.75), and steelmanning/synthesizing viewpoints (8.75). Codex's technical strengths are nearly irrelevant here (programming weighted at 0.1), and its lower scores in ethics and meta-cognition drop it to third. Claude should lead deliberations to ensure thorough ethical analysis, with Gemini providing balanced perspective and Codex contributing any relevant technical accuracy considerations.",
+    "ranking_table_markdown": "| Context Rank | Model  | Context Score | Baseline | Delta  | CJ Suitability | Key Relevant Strengths           |\n|--------------|--------|---------------|----------|--------|----------------|----------------------------------|\n| 1            | Claude | 8.61          | 8.45     | +0.16  | 8.83           | Ethics (8.5), Meta-cog, Steelman |\n| 2            | Gemini | 7.52          | 7.65     | -0.13  | 7.39           | Balanced, Domain knowledge       |\n| 3            | Codex  | 6.89          | 7.85     | -0.96  | 6.27           | Technical (not relevant here)    |"
+  },
+
+  "user_decision": {
+    "decided_at": "2025-12-01T16:02:30Z",
+    "accepted_recommendation": true,
+    "selected_chief_justice": "claude",
+    "override_reason": null
+  },
+
+  "mini_questionnaire_triggered": {
+    "triggered": false,
+    "reason": null,
+    "new_topic_id": null,
+    "mini_questionnaire_id": null
+  }
+}

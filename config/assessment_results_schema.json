@@ -1,0 +1,281 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Council Assessment Results",
+  "description": "Schema for storing AI self-assessments, peer reviews, and context-aware Chief Justice selection",
+
+  "definitions": {
+    "rating": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "weight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Relevance weight from 0.0 (irrelevant) to 1.0 (critical)"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "model_info": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Internal council member ID (e.g., claude, codex, gemini)" },
+        "model_name": { "type": "string", "description": "Specific model version (e.g., claude-opus-4-5-20251101)" },
+        "model_version": { "type": "string", "description": "Version string if available" }
+      },
+      "required": ["id", "model_name"]
+    },
+    "item_rating": {
+      "type": "object",
+      "properties": {
+        "item_id": { "type": "string" },
+        "rating": { "$ref": "#/definitions/rating" },
+        "notes": { "type": "string", "description": "Optional self-commentary" }
+      },
+      "required": ["item_id", "rating"]
+    },
+    "category_ratings": {
+      "type": "object",
+      "properties": {
+        "category_id": { "type": "string" },
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/item_rating" }
+        },
+        "subcategories": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "subcategory_id": { "type": "string" },
+              "items": {
+                "type": "array",
+                "items": { "$ref": "#/definitions/item_rating" }
+              }
+            },
+            "required": ["subcategory_id", "items"]
+          }
+        }
+      },
+      "required": ["category_id"]
+    },
+    "category_relevance": {
+      "type": "object",
+      "properties": {
+        "category_id": { "type": "string" },
+        "relevance": { "$ref": "#/definitions/weight" },
+        "reasoning": { "type": "string" },
+        "specific_items": {
+          "type": "array",
+          "description": "If only specific items within category are relevant",
+          "items": {
+            "type": "object",
+            "properties": {
+              "item_id": { "type": "string" },
+              "relevance": { "$ref": "#/definitions/weight" }
+            },
+            "required": ["item_id", "relevance"]
+          }
+        }
+      },
+      "required": ["category_id", "relevance"]
+    }
+  },
+
+  "type": "object",
+  "properties": {
+    "assessment_id": {
+      "type": "string",
+      "description": "Unique identifier for this assessment cycle (e.g., 20251201_143022)"
+    },
+    "questionnaire_version": {
+      "type": "string",
+      "description": "Version of questionnaire used"
+    },
+    "trigger": {
+      "type": "string",
+      "enum": ["model_change", "user_initiated", "scheduled", "mini_questionnaire"],
+      "description": "What triggered this assessment"
+    },
+    "trigger_details": {
+      "type": "string",
+      "description": "Additional context (e.g., which model changed, topic for mini-questionnaire)"
+    },
+    "created_at": { "$ref": "#/definitions/timestamp" },
+    "completed_at": { "$ref": "#/definitions/timestamp" },
+    "status": {
+      "type": "string",
+      "enum": ["in_progress", "self_assessment_complete", "peer_review_complete", "analysis_complete", "finalized"]
+    },
+
+    "self_assessments": {
+      "type": "array",
+      "description": "Each council member's self-assessment",
+      "items": {
+        "type": "object",
+        "properties": {
+          "model": { "$ref": "#/definitions/model_info" },
+          "submitted_at": { "$ref": "#/definitions/timestamp" },
+          "categories": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/category_ratings" }
+          },
+          "overall_self_rating": { "$ref": "#/definitions/rating" },
+          "strengths_summary": { "type": "string" },
+          "weaknesses_summary": { "type": "string" }
+        },
+        "required": ["model", "submitted_at", "categories"]
+      }
+    },
+
+    "anonymization_map": {
+      "type": "object",
+      "description": "Maps real IDs to anonymous IDs (kept secret during peer review)",
+      "properties": {
+        "generated_at": { "$ref": "#/definitions/timestamp" },
+        "mappings": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^AI-[A-C]$"
+          }
+        }
+      }
+    },
+
+    "peer_reviews": {
+      "type": "array",
+      "description": "Each council member's review of the other (anonymized) members",
+      "items": {
+        "type": "object",
+        "properties": {
+          "reviewer": { "$ref": "#/definitions/model_info" },
+          "submitted_at": { "$ref": "#/definitions/timestamp" },
+          "reviews": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "anonymous_id": {
+                  "type": "string",
+                  "pattern": "^AI-[A-C]$"
+                },
+                "overall_ranking": { "$ref": "#/definitions/rating" },
+                "category_rankings": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "category_id": { "type": "string" },
+                      "ranking": { "$ref": "#/definitions/rating" },
+                      "reasoning": { "type": "string" }
+                    },
+                    "required": ["category_id", "ranking"]
+                  }
+                },
+                "strengths_observed": { "type": "string" },
+                "weaknesses_observed": { "type": "string" },
+                "chief_justice_suitability": {
+                  "type": "object",
+                  "properties": {
+                    "rating": { "$ref": "#/definitions/rating" },
+                    "reasoning": { "type": "string" }
+                  },
+                  "required": ["rating"]
+                }
+              },
+              "required": ["anonymous_id", "overall_ranking"]
+            }
+          }
+        },
+        "required": ["reviewer", "submitted_at", "reviews"]
+      }
+    },
+
+    "baseline_analysis": {
+      "type": "object",
+      "description": "Static baseline analysis from 4th AI (context-independent)",
+      "properties": {
+        "analyst": { "$ref": "#/definitions/model_info" },
+        "analyzed_at": { "$ref": "#/definitions/timestamp" },
+        "methodology": { "type": "string" },
+        "baseline_rankings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "model_id": { "type": "string" },
+              "overall_rank": { "type": "integer", "minimum": 1 },
+              "overall_score": { "type": "number" },
+              "category_scores": {
+                "type": "object",
+                "additionalProperties": { "type": "number" }
+              },
+              "baseline_chief_justice_score": {
+                "type": "number",
+                "description": "General CJ suitability without topic context"
+              }
+            },
+            "required": ["model_id", "overall_rank", "overall_score", "category_scores"]
+          }
+        },
+        "full_report": { "type": "string" },
+        "ranking_table_markdown": { "type": "string" }
+      },
+      "required": ["analyst", "analyzed_at", "baseline_rankings"]
+    },
+
+    "user_decision": {
+      "type": "object",
+      "properties": {
+        "decided_at": { "$ref": "#/definitions/timestamp" },
+        "accepted_recommendation": { "type": "boolean" },
+        "selected_chief_justice": { "type": "string" },
+        "override_reason": { "type": "string", "description": "If user overrode recommendation, why" }
+      },
+      "required": ["decided_at", "selected_chief_justice"]
+    },
+
+    "historical_comparison": {
+      "type": "object",
+      "description": "Comparison to previous assessments",
+      "properties": {
+        "previous_assessment_id": { "type": "string" },
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "model_id": { "type": "string" },
+              "previous_rank": { "type": "integer" },
+              "current_rank": { "type": "integer" },
+              "rank_change": { "type": "integer" },
+              "notable_changes": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "chief_justice_history": {
+      "type": "array",
+      "description": "Track which AI served as Chief Justice for which debates",
+      "items": {
+        "type": "object",
+        "properties": {
+          "debate_id": { "type": "string" },
+          "topic": { "type": "string" },
+          "chief_justice": { "type": "string" },
+          "context_weighted_score": { "type": "number" },
+          "decided_at": { "$ref": "#/definitions/timestamp" },
+          "was_override": { "type": "boolean" }
+        },
+        "required": ["debate_id", "topic", "chief_justice", "decided_at"]
+      }
+    }
+  },
+  "required": ["assessment_id", "questionnaire_version", "trigger", "created_at", "status"]
+}

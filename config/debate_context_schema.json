@@ -1,0 +1,180 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Debate Context Analysis",
+  "description": "Per-debate topic analysis and context-aware Chief Justice selection",
+
+  "definitions": {
+    "weight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Relevance weight from 0.0 (irrelevant) to 1.0 (critical)"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "model_info": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "model_name": { "type": "string" },
+        "model_version": { "type": "string" }
+      },
+      "required": ["id", "model_name"]
+    }
+  },
+
+  "type": "object",
+  "properties": {
+    "debate_id": {
+      "type": "string",
+      "description": "Unique identifier for this debate (e.g., 20251201_150322_oauth_refactor)"
+    },
+    "topic": {
+      "type": "string",
+      "description": "The question or problem presented to the council"
+    },
+    "topic_summary": {
+      "type": "string",
+      "description": "Brief summary of what the debate is about"
+    },
+    "created_at": { "$ref": "#/definitions/timestamp" },
+    "assessment_id": {
+      "type": "string",
+      "description": "Reference to the baseline assessment used for scoring"
+    },
+
+    "topic_analysis": {
+      "type": "object",
+      "description": "4th AI's analysis of which skills are relevant to this topic",
+      "properties": {
+        "analyst": { "$ref": "#/definitions/model_info" },
+        "analyzed_at": { "$ref": "#/definitions/timestamp" },
+        "category_relevance": {
+          "type": "array",
+          "description": "How relevant each questionnaire category is to this topic",
+          "items": {
+            "type": "object",
+            "properties": {
+              "category_id": { "type": "string" },
+              "relevance": { "$ref": "#/definitions/weight" },
+              "reasoning": { "type": "string" },
+              "subcategory_relevance": {
+                "type": "array",
+                "description": "More granular relevance for subcategories if applicable",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "subcategory_id": { "type": "string" },
+                    "relevance": { "$ref": "#/definitions/weight" },
+                    "reasoning": { "type": "string" }
+                  },
+                  "required": ["subcategory_id", "relevance"]
+                }
+              },
+              "item_relevance": {
+                "type": "array",
+                "description": "Even more granular - specific items within a category",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "item_id": { "type": "string" },
+                    "relevance": { "$ref": "#/definitions/weight" }
+                  },
+                  "required": ["item_id", "relevance"]
+                }
+              }
+            },
+            "required": ["category_id", "relevance"]
+          }
+        },
+        "topic_keywords": {
+          "type": "array",
+          "description": "Key concepts/domains identified in the topic",
+          "items": { "type": "string" }
+        },
+        "analysis_notes": {
+          "type": "string",
+          "description": "Additional notes about the topic analysis"
+        }
+      },
+      "required": ["analyst", "analyzed_at", "category_relevance"]
+    },
+
+    "context_weighted_rankings": {
+      "type": "object",
+      "description": "Rankings recalculated based on topic relevance",
+      "properties": {
+        "calculated_at": { "$ref": "#/definitions/timestamp" },
+        "methodology": {
+          "type": "string",
+          "description": "How the weighted scores were calculated"
+        },
+        "rankings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "model_id": { "type": "string" },
+              "context_rank": { "type": "integer", "minimum": 1 },
+              "context_weighted_score": { "type": "number" },
+              "baseline_score": {
+                "type": "number",
+                "description": "Original score from baseline assessment for comparison"
+              },
+              "score_delta": {
+                "type": "number",
+                "description": "Difference from baseline (positive = better fit for this topic)"
+              },
+              "relevant_category_scores": {
+                "type": "object",
+                "description": "Scores in categories marked as relevant",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "score": { "type": "number" },
+                    "relevance_weight": { "$ref": "#/definitions/weight" },
+                    "weighted_contribution": { "type": "number" }
+                  }
+                }
+              },
+              "chief_justice_suitability": {
+                "type": "number",
+                "description": "Context-aware CJ suitability score for this specific topic"
+              }
+            },
+            "required": ["model_id", "context_rank", "context_weighted_score", "chief_justice_suitability"]
+          }
+        },
+        "recommended_chief_justice": { "type": "string" },
+        "recommendation_reasoning": { "type": "string" },
+        "ranking_table_markdown": { "type": "string" }
+      },
+      "required": ["calculated_at", "rankings", "recommended_chief_justice"]
+    },
+
+    "user_decision": {
+      "type": "object",
+      "properties": {
+        "decided_at": { "$ref": "#/definitions/timestamp" },
+        "accepted_recommendation": { "type": "boolean" },
+        "selected_chief_justice": { "type": "string" },
+        "override_reason": { "type": "string" }
+      },
+      "required": ["decided_at", "selected_chief_justice"]
+    },
+
+    "mini_questionnaire_triggered": {
+      "type": "object",
+      "description": "If topic required a mini-questionnaire for uncovered areas",
+      "properties": {
+        "triggered": { "type": "boolean" },
+        "reason": { "type": "string" },
+        "new_topic_id": { "type": "string" },
+        "mini_questionnaire_id": { "type": "string" }
+      }
+    }
+  },
+  "required": ["debate_id", "topic", "created_at", "assessment_id", "topic_analysis", "context_weighted_rankings"]
+}
