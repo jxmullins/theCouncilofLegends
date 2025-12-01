@@ -2,9 +2,9 @@
 
 ## Next Up
 <!-- Priority tasks for next session -->
-1. Implement questionnaire runner for each AI (have each AI fill out `questionnaire_v1.json`)
-2. Implement peer review ranking (each council member ranks the other two)
-3. Wire up arbiter to generate baseline scores using the prompt templates
+1. Test full debate flow with CJ selection end-to-end
+2. Implement SCOTUS mode (majority/concurrence/dissent opinions)
+3. Add historical tracking of CJ selections per debate
 
 ## Features
 <!-- New functionality to add -->
@@ -21,7 +21,7 @@ Chief Justice is selected **per-debate** based on topic relevance to each AI's s
 #### Baseline Assessment (on model change or user re-eval)
 - [x] **Self-Assessment Questionnaire** (`config/questionnaire_v1.json`)
   - [x] Design main questionnaire (9 categories, 70+ items)
-  - [ ] Implement questionnaire runner for each AI
+  - [x] Implement questionnaire runner for each AI (`assess.sh --questionnaire`)
   - [ ] Trigger on model/version change or user-initiated re-eval
   - [ ] Mini-questionnaires for new topics not covered by main questionnaire
   - [ ] Auto-merge mini-questionnaire topics into main questionnaire for next re-eval
@@ -31,29 +31,29 @@ Chief Justice is selected **per-debate** based on topic relevance to each AI's s
   - [x] Prepare peer review packages (excludes reviewer's own assessment)
   - [x] Security validation (no self-review possible)
   - [x] De-anonymize after review complete
-  - [ ] Each council member ranks the other two based on blind results
+  - [x] Each council member ranks the other two based on blind results (`assess.sh --peer-review`)
 - [x] **Baseline Analysis (4th AI)** (`config/assessment_results_schema.json`)
   - [x] Fixed model to start (Groq/Llama) - `lib/adapters/groq_adapter.sh`
   - [x] Design 4th AI prompt templates (`config/prompts/`)
     - [x] `arbiter_baseline.json` - Analyze assessments, generate baseline scores
     - [x] `arbiter_topic.json` - Analyze topic, assign category relevance weights
     - [x] `arbiter_recommendation.json` - Combine baseline + topic → recommend CJ
-  - [ ] Generate baseline scores per category for each AI
+  - [x] Generate baseline scores per category for each AI (`assess.sh --analyze`)
   - [ ] Store as persistent baseline for topic weighting
 
 #### Per-Debate Context Analysis (`config/debate_context_schema.json`)
-- [ ] **Topic Analysis**
-  - [ ] 4th AI analyzes debate topic
-  - [ ] Assigns relevance weights (0.0-1.0) to each questionnaire category
+- [x] **Topic Analysis** (`assess.sh --select-cj`)
+  - [x] 4th AI analyzes debate topic
+  - [x] Assigns relevance weights (0.0-1.0) to each questionnaire category
   - [ ] Can weight down to specific items (e.g., "python" vs all programming)
-- [ ] **Context-Weighted Scoring**
-  - [ ] Recalculate each AI's score using only relevant categories
-  - [ ] AI strong in relevant areas rises; irrelevant strengths don't help
-  - [ ] Example: Technical debate → Codex leads; Ethics debate → Claude leads
-- [ ] **Recommendation & User Decision**
-  - [ ] Present context-weighted rankings table
-  - [ ] Show score delta from baseline (who benefits from this topic)
-  - [ ] User accepts recommendation or manually overrides
+- [x] **Context-Weighted Scoring**
+  - [x] Recalculate each AI's score using only relevant categories
+  - [x] AI strong in relevant areas rises; irrelevant strengths don't help
+  - [x] Example: Technical debate → Codex leads; Ethics debate → Claude leads
+- [x] **Recommendation & User Decision**
+  - [x] Present context-weighted rankings table
+  - [x] Show score delta from baseline (who benefits from this topic)
+  - [x] User accepts recommendation or manually overrides (`--chief-justice AI`)
 
 #### Historical Tracking
 - [ ] Store all baseline assessments with timestamps

@@ -31,6 +31,7 @@ source "$SCRIPT_DIR/lib/adapters/claude_adapter.sh"
 source "$SCRIPT_DIR/lib/adapters/codex_adapter.sh"
 source "$SCRIPT_DIR/lib/adapters/gemini_adapter.sh"
 source "$SCRIPT_DIR/lib/debate.sh"
+source "$SCRIPT_DIR/lib/assessment.sh"
 
 #=============================================================================
 # Help
@@ -64,6 +65,13 @@ ${BOLD}OPTIONS${NC}
 
     --config FILE    Use custom configuration file
 
+    --chief-justice AI   Force a specific Chief Justice (claude, codex, gemini)
+                         If not specified:
+                         - Uses arbiter selection if GROQ_API_KEY is set
+                         - Falls back to first council member otherwise
+
+    --no-cj          Skip Chief Justice selection (no moderator)
+
     --help           Show this help message
 
 ${BOLD}REQUIREMENTS${NC}
@@ -92,6 +100,8 @@ parse_args() {
     MODE="collaborative"
     ROUNDS="$DEFAULT_ROUNDS"
     CONFIG_FILE=""
+    CHIEF_JUSTICE=""
+    SKIP_CJ=false
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -114,6 +124,14 @@ parse_args() {
             --config)
                 CONFIG_FILE="$2"
                 shift 2
+                ;;
+            --chief-justice|--cj)
+                CHIEF_JUSTICE="$2"
+                shift 2
+                ;;
+            --no-cj)
+                SKIP_CJ=true
+                shift
                 ;;
             -*)
                 log_error "Unknown option: $1"
@@ -157,6 +175,19 @@ parse_args() {
         log_error "Invalid rounds: $ROUNDS (must be 2-10)"
         exit 1
     fi
+
+    # Validate chief justice if specified
+    if [[ -n "$CHIEF_JUSTICE" ]]; then
+        case "$CHIEF_JUSTICE" in
+            claude|codex|gemini)
+                ;;
+            *)
+                log_error "Invalid chief justice: $CHIEF_JUSTICE"
+                echo "Valid options: claude, codex, gemini"
+                exit 1
+                ;;
+        esac
+    fi
 }
 
 #=============================================================================
@@ -181,6 +212,54 @@ main() {
     echo -e "${PURPLE}║${NC}     ${CYAN}Claude${NC} ${WHITE}•${NC} ${GREEN}Codex${NC} ${WHITE}•${NC} ${BLUE}Gemini${NC}                       ${PURPLE}║${NC}"
     echo -e "${PURPLE}╚════════════════════════════════════════════════════╝${NC}"
     echo ""
+
+    # Select Chief Justice
+    local selected_cj=""
+
+    if [[ "$SKIP_CJ" == "true" ]]; then
+        log_info "Chief Justice selection skipped"
+    elif [[ -n "$CHIEF_JUSTICE" ]]; then
+        # Use manually specified CJ
+        selected_cj="$CHIEF_JUSTICE"
+        log_info "Chief Justice (manual): $(get_ai_name "$selected_cj")"
+    elif [[ -n "${GROQ_API_KEY:-}" ]]; then
+        # Try to use arbiter selection
+        header "Chief Justice Selection"
+
+        # Find most recent baseline
+        local baseline_file=""
+        local latest_dir
+        latest_dir=$(ls -dt "$COUNCIL_ROOT/assessments/"*/ 2>/dev/null | head -1)
+        if [[ -n "$latest_dir" ]] && [[ -f "$latest_dir/baseline_analysis.json" ]]; then
+            baseline_file="$latest_dir/baseline_analysis.json"
+        fi
+
+        if [[ -f "$baseline_file" ]]; then
+            log_info "Using baseline from: $latest_dir"
+            local cj_output_dir="$COUNCIL_ROOT/cj_selections/$(date +%Y%m%d_%H%M%S)"
+
+            # Run CJ selection (quiet mode - results already displayed by function)
+            selected_cj=$(select_chief_justice "$TOPIC" "$baseline_file" "$cj_output_dir" 2>/dev/null) || true
+
+            if [[ -n "$selected_cj" ]]; then
+                log_success "Chief Justice selected: $(get_ai_name "$selected_cj")"
+            else
+                log_warn "CJ selection failed, using default"
+                selected_cj="${COUNCIL_MEMBERS[0]}"
+            fi
+        else
+            log_warn "No baseline assessment found. Run './assess.sh' to enable smart CJ selection."
+            log_info "Using default Chief Justice: $(get_ai_name "${COUNCIL_MEMBERS[0]}")"
+            selected_cj="${COUNCIL_MEMBERS[0]}"
+        fi
+    else
+        # No GROQ_API_KEY, use default
+        selected_cj="${COUNCIL_MEMBERS[0]}"
+        log_info "Chief Justice (default): $(get_ai_name "$selected_cj")"
+    fi
+
+    # Export CJ for debate module
+    export CHIEF_JUSTICE="$selected_cj"
 
     # Run the debate
     run_debate "$TOPIC" "$MODE" "$ROUNDS"
