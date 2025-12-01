@@ -19,6 +19,7 @@ export BOLD='\033[1m'
 export CLAUDE_COLOR='\033[0;35m'   # Purple
 export CODEX_COLOR='\033[0;32m'    # Green
 export GEMINI_COLOR='\033[0;34m'   # Blue
+export GROQ_COLOR='\033[0;33m'     # Orange/Yellow (4th AI Arbiter)
 
 #=============================================================================
 # Logging Functions
@@ -85,6 +86,10 @@ ai_header() {
         gemini)
             color="$GEMINI_COLOR"
             name="Gemini"
+            ;;
+        groq)
+            color="$GROQ_COLOR"
+            name="Arbiter"
             ;;
         council)
             color="$PURPLE"

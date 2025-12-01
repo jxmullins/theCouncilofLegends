@@ -18,6 +18,10 @@ SUMMARIZE_AFTER_ROUND="${SUMMARIZE_AFTER_ROUND:-false}"
 CLAUDE_MODEL="${CLAUDE_MODEL:-sonnet}"
 CODEX_MODEL="${CODEX_MODEL:-o3}"
 GEMINI_MODEL="${GEMINI_MODEL:-gemini-2.5-flash}"
+# 4th AI Arbiter (Groq/Llama) - used for baseline analysis and Chief Justice selection
+GROQ_MODEL="${GROQ_MODEL:-llama-3.3-70b-versatile}"
+GROQ_MAX_TOKENS="${GROQ_MAX_TOKENS:-4096}"
+GROQ_TEMPERATURE="${GROQ_TEMPERATURE:-0.7}"
 PARALLEL_OPENING="${PARALLEL_OPENING:-false}"
 RETRY_ON_FAILURE="${RETRY_ON_FAILURE:-true}"
 MAX_RETRIES="${MAX_RETRIES:-2}"
@@ -87,6 +91,7 @@ get_ai_color() {
         claude) echo "$CLAUDE_COLOR" ;;
         codex)  echo "$CODEX_COLOR" ;;
         gemini) echo "$GEMINI_COLOR" ;;
+        groq)   echo "$GROQ_COLOR" ;;
         *)      echo "$WHITE" ;;
     esac
 }
@@ -97,6 +102,7 @@ get_ai_name() {
         claude) echo "Claude" ;;
         codex)  echo "Codex" ;;
         gemini) echo "Gemini" ;;
+        groq)   echo "Arbiter" ;;
         *)      echo "$ai" ;;
     esac
 }

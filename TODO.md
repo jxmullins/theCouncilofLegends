@@ -26,9 +26,12 @@ Chief Justice is selected **per-debate** based on topic relevance to each AI's s
   - [x] Security validation (no self-review possible)
   - [x] De-anonymize after review complete
   - [ ] Each council member ranks the other two based on blind results
-- [ ] **Baseline Analysis (4th AI)** (`config/assessment_results_schema.json`)
-  - [ ] Fixed model to start (Groq/Llama recommended)
-  - [ ] Design 4th AI prompt template
+- [x] **Baseline Analysis (4th AI)** (`config/assessment_results_schema.json`)
+  - [x] Fixed model to start (Groq/Llama) - `lib/adapters/groq_adapter.sh`
+  - [x] Design 4th AI prompt templates (`config/prompts/`)
+    - [x] `arbiter_baseline.json` - Analyze assessments, generate baseline scores
+    - [x] `arbiter_topic.json` - Analyze topic, assign category relevance weights
+    - [x] `arbiter_recommendation.json` - Combine baseline + topic → recommend CJ
   - [ ] Generate baseline scores per category for each AI
   - [ ] Store as persistent baseline for topic weighting
 
