@@ -1,5 +1,11 @@
 # The Council of Legends - Todo List
 
+## Next Up
+<!-- Priority tasks for next session -->
+1. Implement questionnaire runner for each AI (have each AI fill out `questionnaire_v1.json`)
+2. Implement peer review ranking (each council member ranks the other two)
+3. Wire up arbiter to generate baseline scores using the prompt templates
+
 ## Features
 <!-- New functionality to add -->
 
