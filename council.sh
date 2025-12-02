@@ -42,20 +42,20 @@ source "$COUNCIL_ROOT/lib/scotus.sh"
 #=============================================================================
 
 show_help() {
-    cat <<EOF
+    printf '%b' "
 ${PURPLE}╔════════════════════════════════════════════════════╗
 ║         THE COUNCIL OF LEGENDS                     ║
 ║     Multi-AI Debate System                         ║
 ╚════════════════════════════════════════════════════╝${NC}
 
 ${BOLD}USAGE${NC}
-    ./council.sh "Your topic or question" [OPTIONS]
+    ./council.sh \"Your topic or question\" [OPTIONS]
 
 ${BOLD}EXAMPLES${NC}
-    ./council.sh "What is the best programming language for beginners?"
-    ./council.sh "Should we use microservices or monolith?" --mode adversarial
-    ./council.sh "How to improve code quality?" --rounds 4 --verbose
-    ./council.sh "AI ethics" --personas claude:philosopher,gemini:futurist
+    ./council.sh \"What is the best programming language for beginners?\"
+    ./council.sh \"Should we use microservices or monolith?\" --mode adversarial
+    ./council.sh \"How to improve code quality?\" --rounds 4 --verbose
+    ./council.sh \"AI ethics\" --personas claude:philosopher,gemini:futurist
 
 ${BOLD}OPTIONS${NC}
     --mode MODE      Debate mode (default: collaborative)
@@ -101,7 +101,7 @@ ${BOLD}OUTPUT${NC}
     - final_synthesis.md Combined conclusions
     - metadata.json     Debate metadata
 
-EOF
+"
 }
 
 #=============================================================================

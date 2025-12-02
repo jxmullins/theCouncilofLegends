@@ -47,21 +47,21 @@ source "$COUNCIL_ROOT/lib/work_modes.sh"
 #=============================================================================
 
 show_help() {
-    cat <<EOF
+    printf '%b' "
 ${PURPLE}╔════════════════════════════════════════════════════╗
 ║         THE COUNCIL OF LEGENDS                     ║
 ║     Team Collaboration Mode                        ║
 ╚════════════════════════════════════════════════════╝${NC}
 
 ${BOLD}USAGE${NC}
-    ./team.sh "Your task description" [OPTIONS]
+    ./team.sh \"Your task description\" [OPTIONS]
 
 ${BOLD}EXAMPLES${NC}
-    ./team.sh "Build a REST API for user authentication"
-    ./team.sh "Design a database schema" --pm codex
-    ./team.sh "Review this PR for security" --mode consultation
-    ./team.sh "Quick code review" --with-arbiter
-    ./team.sh "Complex architecture" --checkpoints major
+    ./team.sh \"Build a REST API for user authentication\"
+    ./team.sh \"Design a database schema\" --pm codex
+    ./team.sh \"Review this PR for security\" --mode consultation
+    ./team.sh \"Quick code review\" --with-arbiter
+    ./team.sh \"Complex architecture\" --checkpoints major
 
 ${BOLD}OPTIONS${NC}
     --pm AI          Force a specific Project Manager
@@ -88,6 +88,10 @@ ${BOLD}OPTIONS${NC}
 
     --show-costs     Display estimated token costs during execution
 
+    --output-dir DIR Create standalone project in specified directory
+                     Example: --output-dir ~/devFiles/my-project
+                     If not specified, prompts interactively after plan approval
+
     --verbose        Enable verbose/debug logging
 
     --help           Show this help message
@@ -112,7 +116,7 @@ ${BOLD}REQUIREMENTS${NC}
     - Questionnaires completed (run ./assess.sh first)
     - GROQ_API_KEY for arbiter features
 
-EOF
+"
 }
 
 #=============================================================================
@@ -126,6 +130,7 @@ parse_args() {
     INCLUDE_ARBITER=""  # Empty means PM decides
     CHECKPOINT_LEVEL="all"
     SHOW_COSTS=false
+    OUTPUT_DIR=""  # External project directory
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -156,6 +161,10 @@ parse_args() {
             --show-costs)
                 SHOW_COSTS=true
                 shift
+                ;;
+            --output-dir)
+                OUTPUT_DIR="$2"
+                shift 2
                 ;;
             --verbose|-v)
                 VERBOSE=true
@@ -252,6 +261,7 @@ main() {
     export TEAM_INCLUDE_ARBITER="$INCLUDE_ARBITER"
     export TEAM_CHECKPOINT_LEVEL="$CHECKPOINT_LEVEL"
     export TEAM_SHOW_COSTS="$SHOW_COSTS"
+    export TEAM_OUTPUT_DIR="$OUTPUT_DIR"
 
     # Run the team workflow
     run_team_workflow "$TASK"
