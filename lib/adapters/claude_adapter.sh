@@ -61,5 +61,8 @@ invoke_claude() {
         return 1
     fi
 
+    # Clean up error file on success
+    rm -f "$error_file"
+
     return 0
 }

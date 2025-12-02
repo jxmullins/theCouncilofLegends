@@ -94,6 +94,19 @@ Chief Justice is selected **per-debate** based on topic relevance to each AI's s
 ## Bug Fixes
 <!-- Issues that need fixing -->
 
+### From Codex Code Review (Dec 2024)
+*Note: Most Codex bug reports were false positives - code already handles these cases*
+- [x] **Retry path missing system_prompt** - Already fixed: `handle_ai_failure` accepts and passes prompt/system_prompt correctly
+- [x] **Personas ignored after config load** - Already fixed: `load_config()` calls `refresh_persona_selections()`
+- [x] **SCOTUS mode allows --no-cj** - Already fixed: Guard at `council.sh:394-401` enforces CJ for SCOTUS
+- [x] **Context controls unused** - Already implemented: `SUMMARIZE_AFTER_ROUND` checked at `context.sh:70`, `MAX_CONTEXT_CHARS` used at `context.sh:93,140,168`
+- [x] **Token bloat risk** - Mitigated: `get_previous_context()` uses summaries when context exceeds threshold
+
+### From Gemini Code Review (Dec 2024)
+- [ ] **Hardcoded temp files** (`test_adapters.sh:66,111,147`) - Use `mktemp` instead of `/tmp/council_test_*.txt` to avoid conflicts (low priority - test files only)
+- [x] **Error files not cleaned up** - Fixed: All adapters now cleanup `.err` files on success
+- [x] **`run_with_timeout` not centralized** - Already in `lib/utils.sh:112-137` (Gemini's report was inaccurate)
+
 ## Documentation
 <!-- Docs, README, examples -->
 

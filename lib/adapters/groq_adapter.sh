@@ -92,7 +92,9 @@ invoke_groq() {
 
     # Write the extracted content to output file
     echo "$content" > "$output_file"
-    rm -f "$response_file"
+
+    # Clean up temp files on success
+    rm -f "$response_file" "$error_file"
 
     log_debug "Groq response received (${#content} chars)"
     return 0
