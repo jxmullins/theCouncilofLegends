@@ -1476,19 +1476,19 @@ select_chief_justice() {
     local topic_file="$output_dir/topic_analysis.json"
     local recommendation_file="$output_dir/cj_recommendation.json"
 
-    # Step 1: Analyze topic
-    if ! run_topic_analysis "$topic" "$topic_file" "$context"; then
+    # Step 1: Analyze topic (redirect stdout to stderr so only final result goes to stdout)
+    if ! run_topic_analysis "$topic" "$topic_file" "$context" >&2; then
         log_error "Failed to analyze topic"
         return 1
     fi
 
-    # Step 2: Generate recommendation
-    if ! run_cj_recommendation "$topic" "$topic_file" "$baseline_file" "$recommendation_file"; then
+    # Step 2: Generate recommendation (redirect stdout to stderr)
+    if ! run_cj_recommendation "$topic" "$topic_file" "$baseline_file" "$recommendation_file" >&2; then
         log_error "Failed to generate CJ recommendation"
         return 1
     fi
 
-    # Return the recommended CJ
+    # Return the recommended CJ (this is the ONLY thing that goes to stdout)
     jq -r '.recommended_chief_justice' "$recommendation_file"
 }
 

@@ -2,18 +2,22 @@
 
 ## Next Up
 <!-- Priority tasks for next session -->
-1. Test full debate flow with CJ selection end-to-end
-2. Implement SCOTUS mode (majority/concurrence/dissent opinions)
-3. Add historical tracking of CJ selections per debate
+1. Add historical tracking of CJ selections per debate
+2. Test edge cases: unanimous (3-0), three-way split
+3. Store persistent baseline for topic weighting
 
 ## Features
 <!-- New functionality to add -->
 
 ### Debate Modes
-- [ ] SCOTUS mode - majority opinions, concurrences, dissents
-  - [ ] Chief Justice Selection System (see below)
-  - [ ] Opinion types: majority, concurrence, dissent
-  - [ ] Vote tallying (3-0 unanimous, 2-1 majority)
+- [x] Judicial mode - majority opinions, concurrences, dissents (`--mode scotus`)
+  - [x] Resolution derivation (arbiter converts topic to yes/no proposition)
+  - [x] CJ-moderated debate rounds (CJ asks follow-up questions)
+  - [x] Position analysis (arbiter infers votes from argumentation)
+  - [x] Opinion assignment (CJ assigns authors based on position)
+  - [x] Opinion types: majority, concurrence, dissent
+  - [x] Vote tallying (2-1 majority implemented, 3-0 unanimous supported)
+  - [ ] Edge case: three-way split (plurality opinion)
 
 ### Chief Justice Selection System
 Chief Justice is selected **per-debate** based on topic relevance to each AI's strengths.

@@ -24,14 +24,16 @@ export COUNCIL_ROOT="$SCRIPT_DIR"
 # Source Libraries
 #=============================================================================
 
-source "$SCRIPT_DIR/lib/utils.sh"
-source "$SCRIPT_DIR/lib/config.sh"
-source "$SCRIPT_DIR/lib/context.sh"
-source "$SCRIPT_DIR/lib/adapters/claude_adapter.sh"
-source "$SCRIPT_DIR/lib/adapters/codex_adapter.sh"
-source "$SCRIPT_DIR/lib/adapters/gemini_adapter.sh"
-source "$SCRIPT_DIR/lib/debate.sh"
-source "$SCRIPT_DIR/lib/assessment.sh"
+source "$COUNCIL_ROOT/lib/utils.sh"
+source "$COUNCIL_ROOT/lib/config.sh"
+source "$COUNCIL_ROOT/lib/context.sh"
+source "$COUNCIL_ROOT/lib/adapters/claude_adapter.sh"
+source "$COUNCIL_ROOT/lib/adapters/codex_adapter.sh"
+source "$COUNCIL_ROOT/lib/adapters/gemini_adapter.sh"
+source "$COUNCIL_ROOT/lib/adapters/groq_adapter.sh"
+source "$COUNCIL_ROOT/lib/debate.sh"
+source "$COUNCIL_ROOT/lib/assessment.sh"
+source "$COUNCIL_ROOT/lib/scotus.sh"
 
 #=============================================================================
 # Help
@@ -57,6 +59,7 @@ ${BOLD}OPTIONS${NC}
                      - collaborative: AIs work together to find consensus
                      - adversarial: AIs argue different positions
                      - exploratory: AIs explore all angles without judgment
+                     - scotus: Judicial mode with formal opinions (majority/concurrence/dissent)
 
     --rounds N       Number of debate rounds (default: 3)
                      Minimum: 2, Maximum: 10
@@ -161,11 +164,11 @@ parse_args() {
 
     # Validate mode
     case "$MODE" in
-        collaborative|adversarial|exploratory)
+        collaborative|adversarial|exploratory|scotus)
             ;;
         *)
             log_error "Invalid mode: $MODE"
-            echo "Valid modes: collaborative, adversarial, exploratory"
+            echo "Valid modes: collaborative, adversarial, exploratory, scotus"
             exit 1
             ;;
     esac
@@ -261,8 +264,12 @@ main() {
     # Export CJ for debate module
     export CHIEF_JUSTICE="$selected_cj"
 
-    # Run the debate
-    run_debate "$TOPIC" "$MODE" "$ROUNDS"
+    # Run the debate (route to SCOTUS mode if selected)
+    if [[ "$MODE" == "scotus" ]]; then
+        run_scotus_debate "$TOPIC" "$ROUNDS"
+    else
+        run_debate "$TOPIC" "$MODE" "$ROUNDS"
+    fi
 }
 
 main "$@"
