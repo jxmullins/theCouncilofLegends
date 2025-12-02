@@ -8,6 +8,7 @@
 #   ./assess.sh --questionnaire    Run only self-assessments
 #   ./assess.sh --peer-review DIR  Run peer reviews on existing assessments
 #   ./assess.sh --verbose          Enable debug output
+#   ./assess.sh --arbiter          Assess arbiter (Groq/Llama) for team mode
 #
 
 set -euo pipefail
@@ -69,6 +70,10 @@ ${BOLD}OPTIONS${NC}
                          - user_initiated (default)
                          - model_change
                          - scheduled
+
+    --arbiter            Assess the arbiter (Groq/Llama) for team mode
+                         Requires GROQ_API_KEY environment variable
+                         Adds arbiter to the most recent assessment
 
     --verbose, -v        Enable verbose/debug logging
 
@@ -138,6 +143,10 @@ parse_args() {
                 TRIGGER="$2"
                 shift 2
                 ;;
+            --arbiter)
+                MODE="arbiter"
+                shift
+                ;;
             --verbose|-v)
                 VERBOSE=true
                 export VERBOSE
@@ -192,6 +201,14 @@ parse_args() {
         fi
         if [[ -z "${GROQ_API_KEY:-}" ]]; then
             log_error "GROQ_API_KEY environment variable required for CJ selection"
+            exit 1
+        fi
+    fi
+
+    # Validate arbiter mode
+    if [[ "$MODE" == "arbiter" ]]; then
+        if [[ -z "${GROQ_API_KEY:-}" ]]; then
+            log_error "GROQ_API_KEY environment variable required for arbiter assessment"
             exit 1
         fi
     fi
@@ -289,6 +306,32 @@ main() {
                 echo ""
                 log_success "Recommended Chief Justice: $(get_ai_name "$recommended_cj")"
                 echo "Selection details saved to: $cj_output_dir"
+            fi
+            ;;
+        arbiter)
+            # Assess the arbiter (Groq/Llama) for team mode
+            header "Arbiter Assessment"
+
+            # Source PM module for arbiter questionnaire function
+            source "$SCRIPT_DIR/lib/pm.sh"
+
+            # Find most recent assessment directory
+            local latest_dir
+            latest_dir=$(ls -dt "$COUNCIL_ROOT/assessments/"*/ 2>/dev/null | head -1)
+
+            if [[ -z "$latest_dir" ]]; then
+                log_error "No assessment directory found. Run './assess.sh' first to create one."
+                exit 1
+            fi
+
+            log_info "Adding arbiter assessment to: $latest_dir"
+
+            if run_arbiter_questionnaire; then
+                log_success "Arbiter assessment complete"
+                echo "Arbiter can now participate in team mode"
+            else
+                log_error "Arbiter assessment failed"
+                exit 1
             fi
             ;;
     esac

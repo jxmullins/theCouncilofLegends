@@ -18,8 +18,12 @@ fi
 # Anonymous IDs for blind peer review
 declare -a ANON_IDS=("AI-A" "AI-B" "AI-C")
 
-# Council member IDs
+# Council member IDs (core debate participants)
 declare -a COUNCIL_MEMBERS=("claude" "codex" "gemini")
+
+# Team member IDs (includes optional arbiter for team mode)
+declare -a TEAM_MEMBERS=("claude" "codex" "gemini")
+declare -a TEAM_MEMBERS_WITH_ARBITER=("claude" "codex" "gemini" "arbiter")
 
 #=============================================================================
 # Anonymization Functions
