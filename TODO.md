@@ -114,6 +114,24 @@ Features leveraging the multi-AI architecture:
 - [ ] **Automatic Persona Matcher** - Auto-pick personas based on topic analysis for coverage diversity (e.g., ethicist + engineer + historian).
 - [ ] **Collaboration Exports (Slack/Notion/PR)** - Push final verdict, opinions, key disagreements to Slack/Notion/PR comments with tl;dr and action items.
 
+### Gemini Suggestions (Dec 2024)
+Creative features leveraging multi-AI dynamics:
+
+- [ ] **Argument Graph Visualization** - Auto-generate directed graph showing argument flow (claims as nodes, support/refutation as edges). Produces visual "debate map" for post-analysis.
+- [ ] **Dynamic Debate Difficulty** - Monitor for groupthink/stagnation; inject controversial premises or assign devil's advocate persona mid-debate. (High complexity)
+- [ ] **Budget-Aware Debates** - Specify `--max-cost` or `--profile frugal`; use cheaper models for exploration rounds, expensive models for synthesis.
+- [ ] **"Silent Observer" Meta-Analysis** - Non-participating AI reports on conversation health: speaking time balance, logical fallacies, persona adherence.
+- [ ] **Git-Inspired Debate Forking & Merging** - Fork from specific rounds (`--fork <id> --from-round 2`), change variables, arbiter merges divergent conclusions. (High complexity)
+- [ ] **On-Demand Evidence Locker** - AIs request evidence via structured calls; system fetches from search/vector DB and injects into context. (High complexity)
+
+### Claude's Favorites (Cross-AI Analysis)
+Top picks combining Codex + Gemini suggestions:
+
+- [ ] **Budget-Aware Debates** (Gemini) - Practical cost control, essential for scaling
+- [ ] **Structured Telemetry & Replay Log** (Codex) - Essential for debugging and observability
+- [ ] **"Silent Observer" Meta-Analysis** (Gemini) - Unique meta-perspective on debate quality
+- [ ] **Synthetic Regression Harness** (Codex) - Enables CI testing without live LLMs
+
 ---
 
 ## Inbox
