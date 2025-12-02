@@ -14,6 +14,7 @@ A multi-AI debate system that orchestrates structured discussions between Claude
 - **Chief Justice Selection**: Optional arbiter (Groq/Llama) selects a moderator based on topic
 - **Context Summarization**: Automatic round summaries for long debates
 - **Full Transcripts**: Markdown transcripts saved for every debate
+- **Team Collaboration Mode**: AIs work together on tasks with a Project Manager coordinating work
 
 ## Prerequisites
 
@@ -154,6 +155,76 @@ Example personas:
 - `scientist` - Evidence-based reasoning
 - `futurist` - Forward-looking perspective
 
+## Team Collaboration Mode
+
+In addition to debates, the Council can work together as a team on tasks:
+
+```bash
+# Basic team task
+./team.sh "Build a REST API for user authentication"
+
+# Specify work mode
+./team.sh "Refactor the database layer" --mode divide_conquer
+
+# Force a specific Project Manager
+./team.sh "Design a caching strategy" --pm claude
+```
+
+### Work Modes
+
+| Mode | Description |
+|------|-------------|
+| `pair_programming` | Two AIs collaborate on the same artifact, passing back and forth |
+| `consultation` | Lead works independently, requests input from specialists as needed |
+| `round_robin` | All members contribute sequentially, each building on previous work |
+| `divide_conquer` | Task split into subtasks, parallel work, PM merges results |
+| `free_form` | Open collaboration with PM moderating discussion |
+
+### Team Roles
+
+The Project Manager dynamically assigns task-oriented roles to each AI:
+
+- **architect** - System design, scalability, component structure
+- **implementer** - Code generation, feature building
+- **security_auditor** - Security review, vulnerability analysis
+- **code_reviewer** - Code quality, patterns, maintainability
+- **tester** - Test case design, edge cases, coverage
+- **documenter** - Documentation, API specs, user guides
+- **debugger** - Bug investigation, root cause analysis
+- **optimizer** - Performance analysis, optimization
+- **integrator** - API integration, system boundaries
+- **researcher** - Technical research, best practices
+
+Roles are reassigned at milestones as the work focus changes.
+
+### Team Configuration
+
+Edit `config/council.conf`:
+
+```bash
+# Team Settings
+TEAM_CHECKPOINT_LEVEL="all"     # all, major, none
+TEAM_INCLUDE_ARBITER=""         # true, false, or empty (PM decides)
+TEAM_FORCE_PM=""                # Force specific PM (claude, codex, gemini)
+TEAM_WORK_MODE=""               # Override work mode selection
+```
+
+### Team Output
+
+Team projects are saved to `./projects/`:
+
+```
+projects/
+  20241201_123456_build-rest-api/
+    metadata.json           # Project metadata
+    execution_plan.json     # PM's plan
+    plan_summary.md         # Human-readable plan
+    final_delivery.md       # Final deliverable
+    responses/              # Individual AI contributions
+    artifacts/              # Generated code/docs
+    checkpoints/            # Milestone snapshots
+```
+
 ## Baseline Assessment
 
 Run baseline assessment to evaluate each AI's capabilities:
@@ -168,20 +239,29 @@ This generates analysis in `assessments/` used for smart Chief Justice selection
 
 ```
 theCouncilofLegends/
-  council.sh          # Main entry point
+  council.sh          # Main entry point (debates)
+  team.sh             # Team collaboration entry point
   assess.sh           # Baseline assessment tool
   config/
     council.conf      # Configuration file
-    personas/         # Persona definitions (TOON/JSON)
+    personas/         # Debate personas (TOON/JSON)
+    roles/            # Team role definitions (TOON)
+    prompts/          # Prompt templates
+    schemas/          # JSON schemas for validation
   lib/
     adapters/         # AI CLI adapters (claude, codex, gemini, groq)
     config.sh         # Configuration management
     context.sh        # Context building and summarization
     debate.sh         # Debate orchestration
     scotus.sh         # SCOTUS judicial mode
+    team.sh           # Team orchestration engine
+    pm.sh             # Project Manager logic
+    work_modes.sh     # Work mode implementations
+    roles.sh          # Role management
     utils.sh          # Utility functions
     assessment.sh     # Assessment logic
   debates/            # Saved debate transcripts
+  projects/           # Saved team projects
   assessments/        # Baseline assessment results
 ```
 
