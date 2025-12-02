@@ -54,7 +54,7 @@ load_config() {
 }
 
 #=============================================================================
-# Persona Loading
+# Persona Loading (Universal Catalog)
 #=============================================================================
 
 # Global persona selections (can be set via CLI or config)
@@ -62,6 +62,17 @@ declare -A PERSONA_SELECTIONS
 PERSONA_SELECTIONS[claude]="${CLAUDE_PERSONA:-default}"
 PERSONA_SELECTIONS[codex]="${CODEX_PERSONA:-default}"
 PERSONA_SELECTIONS[gemini]="${GEMINI_PERSONA:-default}"
+
+# AI provider mapping
+get_ai_provider() {
+    local ai="$1"
+    case "$ai" in
+        claude) echo "Anthropic" ;;
+        codex)  echo "OpenAI" ;;
+        gemini) echo "Google" ;;
+        *)      echo "Unknown" ;;
+    esac
+}
 
 # Set persona for a specific AI
 set_persona() {
@@ -76,96 +87,79 @@ get_persona() {
     echo "${PERSONA_SELECTIONS[$ai]:-default}"
 }
 
-# Load persona system prompt
+# Load persona system prompt (universal catalog with template substitution)
 load_persona() {
     local ai="$1"
     local persona="${2:-${PERSONA_SELECTIONS[$ai]:-default}}"
 
-    # Try new directory structure first (config/personas/{ai}/{persona}.persona)
-    local persona_file="$COUNCIL_ROOT/config/personas/${ai}/${persona}.persona"
+    # Get AI name and provider for template substitution
+    local ai_name provider
+    ai_name=$(get_ai_name "$ai")
+    provider=$(get_ai_provider "$ai")
 
-    # Fall back to legacy flat structure (config/personas/{ai}.persona)
-    if [[ ! -f "$persona_file" ]]; then
-        persona_file="$COUNCIL_ROOT/config/personas/${ai}.persona"
-    fi
+    # Universal persona file (config/personas/{persona}.persona)
+    local persona_file="$COUNCIL_ROOT/config/personas/${persona}.persona"
 
     if [[ -f "$persona_file" ]]; then
-        # Source the persona file to get SYSTEM_PROMPT
+        # Source the persona file to get SYSTEM_PROMPT_TEMPLATE
+        local SYSTEM_PROMPT_TEMPLATE=""
         # shellcheck source=/dev/null
         source "$persona_file"
-        echo "$SYSTEM_PROMPT"
+
+        # Substitute placeholders in template
+        local prompt="$SYSTEM_PROMPT_TEMPLATE"
+        prompt="${prompt//\{\{AI_NAME\}\}/$ai_name}"
+        prompt="${prompt//\{\{PROVIDER\}\}/$provider}"
+        echo "$prompt"
     else
         # Return default persona
-        case "$ai" in
-            claude)
-                echo "You are Claude, an AI assistant by Anthropic, participating in a collaborative debate."
-                ;;
-            codex)
-                echo "You are Codex, an AI assistant by OpenAI, participating in a collaborative debate."
-                ;;
-            gemini)
-                echo "You are Gemini, an AI assistant by Google, participating in a collaborative debate."
-                ;;
-            *)
-                echo "You are an AI assistant participating in a collaborative debate."
-                ;;
-        esac
+        echo "You are $ai_name (powered by $provider), participating in The Council of Legends - a collaborative debate between AI assistants."
     fi
 }
 
-# Get persona display name
+# Get persona display name (combines AI name with persona name)
 get_persona_display_name() {
     local ai="$1"
     local persona="${2:-${PERSONA_SELECTIONS[$ai]:-default}}"
-    local persona_file="$COUNCIL_ROOT/config/personas/${ai}/${persona}.persona"
+    local persona_file="$COUNCIL_ROOT/config/personas/${persona}.persona"
+
+    local ai_name
+    ai_name=$(get_ai_name "$ai")
 
     if [[ -f "$persona_file" ]]; then
+        local NAME=""
         # shellcheck source=/dev/null
         source "$persona_file"
-        echo "${DISPLAY_NAME:-$NAME}"
+        if [[ "$persona" == "default" ]]; then
+            echo "$ai_name"
+        else
+            echo "$ai_name (${NAME})"
+        fi
     else
-        get_ai_name "$ai"
+        echo "$ai_name"
     fi
 }
 
-# List available personas for an AI
-list_personas() {
-    local ai="$1"
-    local personas_dir="$COUNCIL_ROOT/config/personas/${ai}"
-
-    if [[ -d "$personas_dir" ]]; then
-        for persona_file in "$personas_dir"/*.persona; do
-            if [[ -f "$persona_file" ]]; then
-                # shellcheck source=/dev/null
-                source "$persona_file"
-                local persona_id
-                persona_id=$(basename "$persona_file" .persona)
-                echo "${persona_id}|${DISPLAY_NAME:-$NAME}|${DESCRIPTION:-No description}"
-            fi
-        done
-    fi
-}
-
-# List all personas for all AIs
+# List all available personas (universal catalog)
 list_all_personas() {
-    for ai in claude codex gemini; do
-        echo "=== $(get_ai_name "$ai") ==="
-        list_personas "$ai" | while IFS='|' read -r id name desc; do
-            local marker=""
-            if [[ "$id" == "${PERSONA_SELECTIONS[$ai]:-default}" ]]; then
-                marker=" [selected]"
-            fi
-            printf "  %-20s %s%s\n" "$id" "$desc" "$marker"
-        done
-        echo ""
+    local personas_dir="$COUNCIL_ROOT/config/personas"
+
+    for persona_file in "$personas_dir"/*.persona; do
+        if [[ -f "$persona_file" ]]; then
+            local ID="" NAME="" DESCRIPTION=""
+            # shellcheck source=/dev/null
+            source "$persona_file"
+            local persona_id
+            persona_id=$(basename "$persona_file" .persona)
+            echo "${persona_id}|${NAME:-$persona_id}|${DESCRIPTION:-No description}"
+        fi
     done
 }
 
-# Validate persona exists
+# Validate persona exists (universal catalog)
 validate_persona() {
-    local ai="$1"
-    local persona="$2"
-    local persona_file="$COUNCIL_ROOT/config/personas/${ai}/${persona}.persona"
+    local persona="$1"
+    local persona_file="$COUNCIL_ROOT/config/personas/${persona}.persona"
     [[ -f "$persona_file" ]]
 }
 

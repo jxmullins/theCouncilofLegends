@@ -114,32 +114,29 @@ show_personas() {
     echo -e "${PURPLE}║${NC}     ${BOLD}AVAILABLE PERSONAS${NC}                            ${PURPLE}║${NC}"
     echo -e "${PURPLE}╚════════════════════════════════════════════════════╝${NC}"
     echo ""
+    echo -e "${WHITE}Any persona can be assigned to any AI member.${NC}"
+    echo ""
 
-    for ai in claude codex gemini; do
-        local ai_color
-        ai_color=$(get_ai_color "$ai")
-        echo -e "${ai_color}${BOLD}$(get_ai_name "$ai")${NC}"
-        echo -e "${ai_color}────────────────────────────────────────${NC}"
-
-        local personas_dir="$COUNCIL_ROOT/config/personas/${ai}"
-        if [[ -d "$personas_dir" ]]; then
-            for persona_file in "$personas_dir"/*.persona; do
-                if [[ -f "$persona_file" ]]; then
-                    # Source to get variables
-                    local ID="" DISPLAY_NAME="" DESCRIPTION=""
-                    # shellcheck source=/dev/null
-                    source "$persona_file"
-                    local persona_id
-                    persona_id=$(basename "$persona_file" .persona)
-                    printf "  ${BOLD}%-18s${NC} %s\n" "$persona_id" "${DESCRIPTION:-No description}"
-                fi
-            done
+    local personas_dir="$COUNCIL_ROOT/config/personas"
+    for persona_file in "$personas_dir"/*.persona; do
+        if [[ -f "$persona_file" ]]; then
+            # Source to get variables
+            local ID="" NAME="" DESCRIPTION=""
+            # shellcheck source=/dev/null
+            source "$persona_file"
+            local persona_id
+            persona_id=$(basename "$persona_file" .persona)
+            printf "  ${BOLD}%-18s${NC} %s\n" "$persona_id" "${DESCRIPTION:-No description}"
         fi
-        echo ""
     done
 
+    echo ""
     echo -e "${BOLD}Usage:${NC}"
     echo "  ./council.sh \"topic\" --personas claude:philosopher,codex:hacker"
+    echo "  ./council.sh \"topic\" --personas claude:scientist,codex:scientist,gemini:scientist"
+    echo ""
+    echo -e "${WHITE}Format: ai:persona,ai:persona,...${NC}"
+    echo -e "${WHITE}AIs: claude, codex, gemini${NC}"
     echo ""
 }
 
@@ -168,9 +165,9 @@ parse_personas() {
                 ;;
         esac
 
-        # Validate persona exists
-        if ! validate_persona "$ai" "$persona"; then
-            log_error "Unknown persona '$persona' for $ai"
+        # Validate persona exists (universal catalog - persona only)
+        if ! validate_persona "$persona"; then
+            log_error "Unknown persona: $persona"
             echo "Run --list-personas to see available options"
             exit 1
         fi
