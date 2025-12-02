@@ -10,7 +10,9 @@
 # Options:
 #   --mode       Debate mode: collaborative (default), adversarial, exploratory
 #   --rounds     Number of rounds (default: 3)
+#   --personas   Set personas (format: claude:philosopher,codex:hacker,gemini:scientist)
 #   --verbose    Enable verbose logging
+#   --list-personas  Show available personas
 #   --help       Show this help message
 #
 
@@ -53,6 +55,7 @@ ${BOLD}EXAMPLES${NC}
     ./council.sh "What is the best programming language for beginners?"
     ./council.sh "Should we use microservices or monolith?" --mode adversarial
     ./council.sh "How to improve code quality?" --rounds 4 --verbose
+    ./council.sh "AI ethics" --personas claude:philosopher,gemini:futurist
 
 ${BOLD}OPTIONS${NC}
     --mode MODE      Debate mode (default: collaborative)
@@ -75,6 +78,13 @@ ${BOLD}OPTIONS${NC}
 
     --no-cj          Skip Chief Justice selection (no moderator)
 
+    --personas SPEC  Set personas for council members
+                     Format: ai:persona,ai:persona,...
+                     Example: --personas claude:philosopher,codex:hacker
+                     Only specified AIs are changed; others use default
+
+    --list-personas  Show all available personas and exit
+
     --help           Show this help message
 
 ${BOLD}REQUIREMENTS${NC}
@@ -95,6 +105,83 @@ EOF
 }
 
 #=============================================================================
+# Show Available Personas
+#=============================================================================
+
+show_personas() {
+    echo ""
+    echo -e "${PURPLE}╔════════════════════════════════════════════════════╗${NC}"
+    echo -e "${PURPLE}║${NC}     ${BOLD}AVAILABLE PERSONAS${NC}                            ${PURPLE}║${NC}"
+    echo -e "${PURPLE}╚════════════════════════════════════════════════════╝${NC}"
+    echo ""
+
+    for ai in claude codex gemini; do
+        local ai_color
+        ai_color=$(get_ai_color "$ai")
+        echo -e "${ai_color}${BOLD}$(get_ai_name "$ai")${NC}"
+        echo -e "${ai_color}────────────────────────────────────────${NC}"
+
+        local personas_dir="$COUNCIL_ROOT/config/personas/${ai}"
+        if [[ -d "$personas_dir" ]]; then
+            for persona_file in "$personas_dir"/*.persona; do
+                if [[ -f "$persona_file" ]]; then
+                    # Source to get variables
+                    local ID="" DISPLAY_NAME="" DESCRIPTION=""
+                    # shellcheck source=/dev/null
+                    source "$persona_file"
+                    local persona_id
+                    persona_id=$(basename "$persona_file" .persona)
+                    printf "  ${BOLD}%-18s${NC} %s\n" "$persona_id" "${DESCRIPTION:-No description}"
+                fi
+            done
+        fi
+        echo ""
+    done
+
+    echo -e "${BOLD}Usage:${NC}"
+    echo "  ./council.sh \"topic\" --personas claude:philosopher,codex:hacker"
+    echo ""
+}
+
+#=============================================================================
+# Parse Persona Specification
+#=============================================================================
+
+parse_personas() {
+    local spec="$1"
+
+    # Split by comma
+    IFS=',' read -ra pairs <<< "$spec"
+    for pair in "${pairs[@]}"; do
+        # Split by colon
+        local ai="${pair%%:*}"
+        local persona="${pair##*:}"
+
+        # Validate AI name
+        case "$ai" in
+            claude|codex|gemini)
+                ;;
+            *)
+                log_error "Invalid AI in persona spec: $ai"
+                echo "Valid AIs: claude, codex, gemini"
+                exit 1
+                ;;
+        esac
+
+        # Validate persona exists
+        if ! validate_persona "$ai" "$persona"; then
+            log_error "Unknown persona '$persona' for $ai"
+            echo "Run --list-personas to see available options"
+            exit 1
+        fi
+
+        # Set the persona
+        set_persona "$ai" "$persona"
+        log_debug "Set $ai persona to: $persona"
+    done
+}
+
+#=============================================================================
 # Argument Parsing
 #=============================================================================
 
@@ -105,11 +192,16 @@ parse_args() {
     CONFIG_FILE=""
     CHIEF_JUSTICE=""
     SKIP_CJ=false
+    PERSONAS_SPEC=""
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --help|-h)
                 show_help
+                exit 0
+                ;;
+            --list-personas)
+                show_personas
                 exit 0
                 ;;
             --mode)
@@ -135,6 +227,10 @@ parse_args() {
             --no-cj)
                 SKIP_CJ=true
                 shift
+                ;;
+            --personas)
+                PERSONAS_SPEC="$2"
+                shift 2
                 ;;
             -*)
                 log_error "Unknown option: $1"
@@ -208,6 +304,11 @@ main() {
         load_config
     fi
 
+    # Parse persona specifications if provided
+    if [[ -n "$PERSONAS_SPEC" ]]; then
+        parse_personas "$PERSONAS_SPEC"
+    fi
+
     # Display banner
     echo ""
     echo -e "${PURPLE}╔════════════════════════════════════════════════════╗${NC}"
@@ -215,6 +316,29 @@ main() {
     echo -e "${PURPLE}║${NC}     ${CYAN}Claude${NC} ${WHITE}•${NC} ${GREEN}Codex${NC} ${WHITE}•${NC} ${BLUE}Gemini${NC}                       ${PURPLE}║${NC}"
     echo -e "${PURPLE}╚════════════════════════════════════════════════════╝${NC}"
     echo ""
+
+    # Display active personas if any non-default
+    local has_custom_persona=false
+    for ai in claude codex gemini; do
+        if [[ "$(get_persona "$ai")" != "default" ]]; then
+            has_custom_persona=true
+            break
+        fi
+    done
+
+    if [[ "$has_custom_persona" == "true" ]]; then
+        echo -e "${BOLD}Active Personas:${NC}"
+        for ai in claude codex gemini; do
+            local persona
+            persona=$(get_persona "$ai")
+            local display_name
+            display_name=$(get_persona_display_name "$ai" "$persona")
+            local ai_color
+            ai_color=$(get_ai_color "$ai")
+            echo -e "  ${ai_color}${display_name}${NC}"
+        done
+        echo ""
+    fi
 
     # Select Chief Justice
     local selected_cj=""

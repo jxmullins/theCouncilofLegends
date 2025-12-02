@@ -521,6 +521,25 @@ generate_scotus_transcript() {
     local majority_position
     majority_position=$(jq -r '.majority_position' "$assignments_file")
 
+    # Build persona info string if non-default personas used
+    local persona_info=""
+    local has_custom_persona=false
+    for ai in claude codex gemini; do
+        if [[ "$(get_persona "$ai")" != "default" ]]; then
+            has_custom_persona=true
+            break
+        fi
+    done
+    if [[ "$has_custom_persona" == "true" ]]; then
+        persona_info="- **Personas:**"
+        for ai in claude codex gemini; do
+            local display_name
+            display_name=$(get_persona_display_name "$ai" "$(get_persona "$ai")")
+            persona_info="$persona_info
+  - $display_name"
+        done
+    fi
+
     cat > "$transcript_file" <<EOF
 # The Council of Legends - Judicial Mode
 
@@ -530,6 +549,7 @@ generate_scotus_transcript() {
 - **Chief Justice:** $(get_ai_name "$cj")
 - **Vote:** $vote_summary
 - **Decision:** Resolution ${majority_position}ed
+${persona_info}
 
 ---
 
@@ -672,6 +692,25 @@ run_scotus_debate() {
     echo -e "${WHITE}Topic:${NC} $topic"
     echo -e "${WHITE}Chief Justice:${NC} $(get_ai_name "$CHIEF_JUSTICE")"
     echo -e "${WHITE}Rounds:${NC} $rounds"
+
+    # Show personas if any non-default
+    local has_custom_persona=false
+    for ai in claude codex gemini; do
+        if [[ "$(get_persona "$ai")" != "default" ]]; then
+            has_custom_persona=true
+            break
+        fi
+    done
+    if [[ "$has_custom_persona" == "true" ]]; then
+        echo -e "${WHITE}Personas:${NC}"
+        for ai in claude codex gemini; do
+            local persona display_name ai_color
+            persona=$(get_persona "$ai")
+            display_name=$(get_persona_display_name "$ai" "$persona")
+            ai_color=$(get_ai_color "$ai")
+            echo -e "  ${ai_color}${display_name}${NC}"
+        done
+    fi
     echo ""
 
     #=========================================================================

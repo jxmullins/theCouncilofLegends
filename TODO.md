@@ -73,9 +73,15 @@ Chief Justice is selected **per-debate** based on topic relevance to each AI's s
 - [ ] Select token-based (local) vs API auth per LLM
 
 ### Persona System
-- [ ] Update personas for each LLM or add new personas
-- [ ] Select personas for each debate
+- [x] Persona catalog with multiple personas per AI (`config/personas/{ai}/*.persona`)
+  - [x] Claude: default, philosopher, devils_advocate, historian
+  - [x] Codex: default, architect, hacker, security_expert
+  - [x] Gemini: default, scientist, futurist, pragmatist
+- [x] Select personas via CLI (`--personas claude:philosopher,codex:hacker`)
+- [x] List available personas (`--list-personas`)
+- [x] Persona info in metadata.json and transcripts
 - [ ] Change personas per round (or let LLM decide when to switch)
+- [ ] Create additional themed personas (e.g., educator, devil's advocate duo)
 
 ## Improvements
 <!-- Enhancements to existing functionality -->
