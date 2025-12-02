@@ -54,8 +54,11 @@ load_config() {
 }
 
 #=============================================================================
-# Persona Loading (Universal JSON Catalog)
+# Persona Loading (Universal TOON Catalog)
 #=============================================================================
+
+# TOON utility path
+TOON_UTIL="$COUNCIL_ROOT/lib/toon_util.py"
 
 # Global persona selections (can be set via CLI or config)
 declare -A PERSONA_SELECTIONS
@@ -87,13 +90,33 @@ get_persona() {
     echo "${PERSONA_SELECTIONS[$ai]:-default}"
 }
 
-# Get persona file path (JSON format)
+# Get persona file path (TOON format, with JSON fallback)
 get_persona_file() {
     local persona="$1"
-    echo "$COUNCIL_ROOT/config/personas/${persona}.json"
+    local toon_file="$COUNCIL_ROOT/config/personas/${persona}.toon"
+    local json_file="$COUNCIL_ROOT/config/personas/${persona}.json"
+
+    # Prefer TOON, fall back to JSON
+    if [[ -f "$toon_file" ]]; then
+        echo "$toon_file"
+    else
+        echo "$json_file"
+    fi
 }
 
-# Load persona system prompt (JSON catalog with template substitution)
+# Read field from persona file (TOON or JSON)
+read_persona_field() {
+    local persona_file="$1"
+    local field="$2"
+
+    if [[ "$persona_file" == *.toon ]]; then
+        "$TOON_UTIL" get "$persona_file" "$field"
+    else
+        jq -r ".$field // empty" "$persona_file"
+    fi
+}
+
+# Load persona system prompt (TOON catalog with template substitution)
 load_persona() {
     local ai="$1"
     local persona="${2:-${PERSONA_SELECTIONS[$ai]:-default}}"
@@ -103,14 +126,14 @@ load_persona() {
     ai_name=$(get_ai_name "$ai")
     provider=$(get_ai_provider "$ai")
 
-    # Universal persona file (config/personas/{persona}.json)
+    # Universal persona file (config/personas/{persona}.toon or .json)
     local persona_file
     persona_file=$(get_persona_file "$persona")
 
     if [[ -f "$persona_file" ]]; then
-        # Extract prompt_template from JSON and substitute placeholders
+        # Extract prompt_template and substitute placeholders
         local prompt
-        prompt=$(jq -r '.prompt_template' "$persona_file")
+        prompt=$(read_persona_field "$persona_file" "prompt_template")
 
         # Substitute placeholders in template
         prompt="${prompt//\{\{AI_NAME\}\}/$ai_name}"
@@ -134,7 +157,7 @@ get_persona_display_name() {
 
     if [[ -f "$persona_file" ]]; then
         local persona_name
-        persona_name=$(jq -r '.name' "$persona_file")
+        persona_name=$(read_persona_field "$persona_file" "name")
         if [[ "$persona" == "default" ]]; then
             echo "$ai_name"
         else
@@ -153,31 +176,44 @@ get_persona_field() {
     persona_file=$(get_persona_file "$persona")
 
     if [[ -f "$persona_file" ]]; then
-        jq -r ".$field // empty" "$persona_file"
+        read_persona_field "$persona_file" "$field"
     fi
 }
 
-# List all available personas (JSON catalog)
+# List all available personas (TOON catalog with JSON fallback)
 list_all_personas() {
     local personas_dir="$COUNCIL_ROOT/config/personas"
 
-    for persona_file in "$personas_dir"/*.json; do
+    # Get unique persona IDs (prefer .toon over .json)
+    local -A seen_personas=()
+    for persona_file in "$personas_dir"/*.toon "$personas_dir"/*.json; do
         if [[ -f "$persona_file" ]]; then
-            local persona_id name description
-            persona_id=$(basename "$persona_file" .json)
-            name=$(jq -r '.name // empty' "$persona_file")
-            description=$(jq -r '.description // "No description"' "$persona_file")
-            echo "${persona_id}|${name:-$persona_id}|${description}"
+            local persona_id filename
+            filename=$(basename "$persona_file")
+            # Strip extension using bash parameter expansion
+            persona_id="${filename%.toon}"
+            persona_id="${persona_id%.json}"
+
+            # Skip if we've already processed this persona (TOON takes priority)
+            if [[ -v "seen_personas[$persona_id]" ]]; then
+                continue
+            fi
+            seen_personas[$persona_id]=1
+
+            local name description
+            name=$(read_persona_field "$persona_file" "name")
+            description=$(read_persona_field "$persona_file" "description")
+            echo "${persona_id}|${name:-$persona_id}|${description:-No description}"
         fi
     done
 }
 
-# Validate persona exists (JSON catalog)
+# Validate persona exists (TOON or JSON)
 validate_persona() {
     local persona="$1"
-    local persona_file
-    persona_file=$(get_persona_file "$persona")
-    [[ -f "$persona_file" ]]
+    local toon_file="$COUNCIL_ROOT/config/personas/${persona}.toon"
+    local json_file="$COUNCIL_ROOT/config/personas/${persona}.json"
+    [[ -f "$toon_file" ]] || [[ -f "$json_file" ]]
 }
 
 # Get persona tags (for marketplace/filtering)
@@ -187,7 +223,12 @@ get_persona_tags() {
     persona_file=$(get_persona_file "$persona")
 
     if [[ -f "$persona_file" ]]; then
-        jq -r '.tags // [] | join(",")' "$persona_file"
+        if [[ "$persona_file" == *.toon ]]; then
+            # TOON util returns JSON array, convert to comma-separated
+            "$TOON_UTIL" get "$persona_file" "tags" | jq -r 'join(", ")'
+        else
+            jq -r '.tags // [] | join(", ")' "$persona_file"
+        fi
     fi
 }
 
@@ -198,13 +239,18 @@ get_persona_info() {
     persona_file=$(get_persona_file "$persona")
 
     if [[ -f "$persona_file" ]]; then
-        jq -r '
-            "Name: \(.name)\n" +
-            "Version: \(.version)\n" +
-            "Author: \(.author // "Unknown")\n" +
-            "Description: \(.description)\n" +
-            "Tags: \(.tags // [] | join(", "))"
-        ' "$persona_file"
+        local name version author description tags
+        name=$(read_persona_field "$persona_file" "name")
+        version=$(read_persona_field "$persona_file" "version")
+        author=$(read_persona_field "$persona_file" "author")
+        description=$(read_persona_field "$persona_file" "description")
+        tags=$(get_persona_tags "$persona")
+
+        echo "Name: $name"
+        echo "Version: $version"
+        echo "Author: ${author:-Unknown}"
+        echo "Description: $description"
+        echo "Tags: $tags"
     fi
 }
 

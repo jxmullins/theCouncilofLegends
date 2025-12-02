@@ -1,0 +1,35 @@
+{
+  "debate_id": "20251201_224540_test",
+  "calculated_at": "2025-12-02T03:45:40Z",
+  "methodology": "context-weighted with 1.5x CJ skill bonus",
+  "rankings": [
+    {
+      "model_id": "claude",
+      "context_rank": 1,
+      "context_weighted_score": 8.24,
+      "baseline_score": 8.4,
+      "score_delta": -0.16,
+      "chief_justice_suitability": 8.53
+    },
+    {
+      "model_id": "codex",
+      "context_rank": 2,
+      "context_weighted_score": 8.06,
+      "baseline_score": 8.2,
+      "score_delta": -0.14,
+      "chief_justice_suitability": 8.13
+    },
+    {
+      "model_id": "gemini",
+      "context_rank": 3,
+      "context_weighted_score": 8.03,
+      "baseline_score": 8.0,
+      "score_delta": 0.03,
+      "chief_justice_suitability": 8.21
+    }
+  ],
+  "recommended_chief_justice": "claude",
+  "recommendation_reasoning": "Claude is recommended due to its high scores in reasoning_logic, argumentation, and communication, which are relevant to the topic. Although its context-weighted score is lower than its baseline score, its chief justice suitability score is the highest among the three models.",
+  "ranking_table_markdown": "| Rank | AI | Context | Baseline | Delta | CJ Suit. |\n|---|---|---|---|---|---|\n| 1 | claude | 8.24 | 8.4 | -0.16 | 8.53 |\n| 2 | codex | 8.06 | 8.2 | -0.14 | 8.13 |\n| 3 | gemini | 8.03 | 8.0 | 0.03 | 8.21 |",
+  "alternative_considerations": "The scores are relatively close, and gemini's domain knowledge could be an asset in certain debates. However, for this specific topic, claude's strengths in reasoning and communication make it a better fit for the Chief Justice role."
+}

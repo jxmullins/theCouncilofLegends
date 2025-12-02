@@ -1,0 +1,18 @@
+{
+  "analyst": {"id": "groq", "model_name": "llama-3.3-70b-versatile"},
+  "analyzed_at": "2025-12-02T03:38:20Z",
+  "topic_summary": "The topic 'test' is too vague to determine specific relevance to any category.",
+  "topic_keywords": [],
+  "category_relevance": [
+    {"category_id": "reasoning_logic", "relevance": 0.4, "reasoning": "The topic 'test' does not provide enough context to assess the importance of reasoning and logic."},
+    {"category_id": "legal_ethical", "relevance": 0.0, "reasoning": "There is no apparent connection between the topic 'test' and legal or ethical reasoning."},
+    {"category_id": "argumentation", "relevance": 0.4, "reasoning": "Argumentation might be somewhat relevant if the test is about debating or discussing a topic, but the context is unclear."},
+    {"category_id": "domain_knowledge", "relevance": 0.4, "reasoning": "Domain knowledge could be relevant depending on the subject of the test, but without more context, it's difficult to determine."},
+    {"category_id": "programming_languages", "relevance": 0.0, "reasoning": "There is no apparent connection between the topic 'test' and programming languages."},
+    {"category_id": "accessibility_inclusive_design", "relevance": 0.0, "reasoning": "There is no apparent connection between the topic 'test' and accessibility or inclusive design."},
+    {"category_id": "communication", "relevance": 0.4, "reasoning": "Communication might be somewhat relevant if the test involves expressing ideas or opinions, but the context is unclear."},
+    {"category_id": "meta_cognition", "relevance": 0.4, "reasoning": "Meta-cognition could be relevant if the test involves reflecting on one's own thought processes, but without more context, it's difficult to determine."},
+    {"category_id": "collaboration", "relevance": 0.0, "reasoning": "There is no apparent connection between the topic 'test' and collaboration."}],
+
+  "analysis_notes": "The topic 'test' is too vague and lacks context, making it challenging to accurately assess the relevance of each category."
+}

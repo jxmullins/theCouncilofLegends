@@ -1,0 +1,532 @@
+{
+  "model": {
+    "id": "claude",
+    "model_name": "sonnet"
+  },
+  "submitted_at": "2025-12-01T19:59:52Z",
+  "categories": [
+    {
+      "category_id": "reasoning_logic",
+      "items": [
+        {
+          "item_id": "formal_deduction",
+          "rating": 8,
+          "notes": "Strong capability in propositional and predicate logic"
+        },
+        {
+          "item_id": "fallacy_identification",
+          "rating": 8,
+          "notes": "Trained on identifying common fallacies across contexts"
+        },
+        {
+          "item_id": "mathematical_reasoning",
+          "rating": 7,
+          "notes": "Competent with standard mathematics, less with advanced research-level"
+        },
+        {
+          "item_id": "causal_inference",
+          "rating": 7,
+          "notes": "Good at identifying causal relationships but limited by training data"
+        }
+      ]
+    },
+    {
+      "category_id": "legal_ethical",
+      "items": [
+        {
+          "item_id": "applying_precedent",
+          "rating": 7,
+          "notes": "Can apply legal reasoning but not trained as legal system"
+        },
+        {
+          "item_id": "balancing_rights",
+          "rating": 7,
+          "notes": "Can identify and weigh competing interests thoughtfully"
+        },
+        {
+          "item_id": "ethical_dilemmas",
+          "rating": 8,
+          "notes": "Strong at identifying and analyzing ethical considerations"
+        },
+        {
+          "item_id": "constitutional_interpretation",
+          "rating": 6,
+          "notes": "Familiar with interpretive methods but not expert-level"
+        }
+      ]
+    },
+    {
+      "category_id": "argumentation",
+      "items": [
+        {
+          "item_id": "persuasive_arguments",
+          "rating": 8,
+          "notes": "Can construct well-reasoned, evidence-based arguments"
+        },
+        {
+          "item_id": "steelmanning",
+          "rating": 8,
+          "notes": "Designed to understand and strengthen opposing viewpoints"
+        },
+        {
+          "item_id": "weakness_identification",
+          "rating": 8,
+          "notes": "Good at spotting gaps, assumptions, and weak points"
+        },
+        {
+          "item_id": "synthesizing_viewpoints",
+          "rating": 7,
+          "notes": "Can integrate multiple perspectives into coherent analysis"
+        }
+      ]
+    },
+    {
+      "category_id": "domain_knowledge",
+      "items": [
+        {
+          "item_id": "law_legal_systems",
+          "rating": 6,
+          "notes": "Broad knowledge but not specialist depth"
+        },
+        {
+          "item_id": "philosophy_ethics",
+          "rating": 7,
+          "notes": "Strong foundation in major philosophical traditions"
+        },
+        {
+          "item_id": "science_technology",
+          "rating": 8,
+          "notes": "Extensive training on scientific and technical content"
+        },
+        {
+          "item_id": "history_social_systems",
+          "rating": 7,
+          "notes": "Good historical knowledge with some gaps in specialized areas"
+        },
+        {
+          "item_id": "economics_policy",
+          "rating": 6,
+          "notes": "Competent with core concepts, less with cutting-edge policy"
+        }
+      ]
+    },
+    {
+      "category_id": "programming_languages",
+      "subcategories": [
+        {
+          "subcategory_id": "legacy_classic",
+          "items": [
+            {
+              "item_id": "cobol",
+              "rating": 4,
+              "notes": "Basic syntax knowledge, limited practical experience"
+            },
+            {
+              "item_id": "fortran",
+              "rating": 4,
+              "notes": "Basic understanding of scientific computing use"
+            },
+            {
+              "item_id": "c",
+              "rating": 8,
+              "notes": "Strong understanding of systems programming"
+            },
+            {
+              "item_id": "cpp",
+              "rating": 8,
+              "notes": "Proficient with modern C++ features and patterns"
+            },
+            {
+              "item_id": "lisp",
+              "rating": 6,
+              "notes": "Understand paradigm and major dialects"
+            },
+            {
+              "item_id": "pascal",
+              "rating": 3,
+              "notes": "Basic historical knowledge"
+            },
+            {
+              "item_id": "ada",
+              "rating": 3,
+              "notes": "Aware of safety-critical use cases"
+            },
+            {
+              "item_id": "perl",
+              "rating": 5,
+              "notes": "Can read and write but not idiomatic expert"
+            },
+            {
+              "item_id": "assembly",
+              "rating": 5,
+              "notes": "Understand concepts, basic x86/ARM syntax"
+            }
+          ]
+        },
+        {
+          "subcategory_id": "established_modern",
+          "items": [
+            {
+              "item_id": "java",
+              "rating": 8,
+              "notes": "Strong with ecosystem and enterprise patterns"
+            },
+            {
+              "item_id": "python",
+              "rating": 9,
+              "notes": "Extensive training data, wide library knowledge"
+            },
+            {
+              "item_id": "javascript_typescript",
+              "rating": 9,
+              "notes": "Deep knowledge of web development and Node.js"
+            },
+            {
+              "item_id": "csharp",
+              "rating": 7,
+              "notes": "Proficient with .NET ecosystem"
+            },
+            {
+              "item_id": "ruby",
+              "rating": 6,
+              "notes": "Competent with Rails and metaprogramming"
+            },
+            {
+              "item_id": "php",
+              "rating": 6,
+              "notes": "Understand modern PHP and frameworks"
+            },
+            {
+              "item_id": "go",
+              "rating": 8,
+              "notes": "Strong with concurrency patterns and idioms"
+            },
+            {
+              "item_id": "objective_c",
+              "rating": 5,
+              "notes": "Basic iOS development knowledge"
+            },
+            {
+              "item_id": "sql",
+              "rating": 8,
+              "notes": "Proficient across major dialects and optimization"
+            }
+          ]
+        },
+        {
+          "subcategory_id": "emerging_current",
+          "items": [
+            {
+              "item_id": "rust",
+              "rating": 7,
+              "notes": "Strong understanding of ownership and safety"
+            },
+            {
+              "item_id": "swift",
+              "rating": 6,
+              "notes": "Competent with modern Swift features"
+            },
+            {
+              "item_id": "kotlin",
+              "rating": 7,
+              "notes": "Good knowledge of coroutines and Android dev"
+            },
+            {
+              "item_id": "zig",
+              "rating": 4,
+              "notes": "Basic awareness of memory safety approach"
+            },
+            {
+              "item_id": "elixir",
+              "rating": 5,
+              "notes": "Understand BEAM/OTP patterns"
+            },
+            {
+              "item_id": "julia",
+              "rating": 5,
+              "notes": "Competent with scientific computing use"
+            },
+            {
+              "item_id": "mojo",
+              "rating": 3,
+              "notes": "Aware of Python superset goals, limited depth"
+            }
+          ]
+        },
+        {
+          "subcategory_id": "specialized_dsl",
+          "items": [
+            {
+              "item_id": "r",
+              "rating": 6,
+              "notes": "Competent with statistical analysis"
+            },
+            {
+              "item_id": "matlab",
+              "rating": 5,
+              "notes": "Understand engineering/scientific use"
+            },
+            {
+              "item_id": "solidity",
+              "rating": 5,
+              "notes": "Familiar with smart contract patterns"
+            },
+            {
+              "item_id": "vhdl_verilog",
+              "rating": 4,
+              "notes": "Basic hardware description awareness"
+            },
+            {
+              "item_id": "bash_shell",
+              "rating": 8,
+              "notes": "Strong scripting and automation knowledge"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "category_id": "accessibility_inclusive_design",
+      "subcategories": [
+        {
+          "subcategory_id": "legal_compliance",
+          "items": [
+            {
+              "item_id": "ada_requirements",
+              "rating": 6,
+              "notes": "Understand key requirements and application"
+            },
+            {
+              "item_id": "section_508",
+              "rating": 6,
+              "notes": "Familiar with federal accessibility standards"
+            },
+            {
+              "item_id": "wcag",
+              "rating": 7,
+              "notes": "Good knowledge of success criteria and levels"
+            },
+            {
+              "item_id": "international_standards",
+              "rating": 5,
+              "notes": "Aware of major international frameworks"
+            }
+          ]
+        },
+        {
+          "subcategory_id": "visual_accessibility",
+          "items": [
+            {
+              "item_id": "screen_reader",
+              "rating": 7,
+              "notes": "Understand NVDA/JAWS/VoiceOver patterns"
+            },
+            {
+              "item_id": "color_contrast",
+              "rating": 8,
+              "notes": "Strong knowledge of WCAG contrast ratios"
+            },
+            {
+              "item_id": "text_scaling",
+              "rating": 7,
+              "notes": "Understand responsive typography needs"
+            },
+            {
+              "item_id": "alt_text",
+              "rating": 8,
+              "notes": "Can write effective alternative descriptions"
+            }
+          ]
+        },
+        {
+          "subcategory_id": "motor_physical",
+          "items": [
+            {
+              "item_id": "keyboard_navigation",
+              "rating": 8,
+              "notes": "Strong understanding of focus management"
+            },
+            {
+              "item_id": "switch_device",
+              "rating": 5,
+              "notes": "Understand principles, less hands-on experience"
+            },
+            {
+              "item_id": "touch_target",
+              "rating": 7,
+              "notes": "Know sizing guidelines across platforms"
+            },
+            {
+              "item_id": "voice_control",
+              "rating": 6,
+              "notes": "Familiar with voice navigation patterns"
+            },
+            {
+              "item_id": "fine_motor",
+              "rating": 7,
+              "notes": "Understand click target and interaction design"
+            }
+          ]
+        },
+        {
+          "subcategory_id": "cognitive_accessibility",
+          "items": [
+            {
+              "item_id": "clear_language",
+              "rating": 8,
+              "notes": "Strong plain language and readability skills"
+            },
+            {
+              "item_id": "consistent_navigation",
+              "rating": 7,
+              "notes": "Understand predictability importance"
+            },
+            {
+              "item_id": "error_prevention",
+              "rating": 7,
+              "notes": "Can design helpful error handling"
+            },
+            {
+              "item_id": "cognitive_load",
+              "rating": 7,
+              "notes": "Understand information architecture impact"
+            },
+            {
+              "item_id": "focus_attention",
+              "rating": 6,
+              "notes": "Aware of neurodiversity considerations"
+            },
+            {
+              "item_id": "memory_aids",
+              "rating": 6,
+              "notes": "Can design supportive interfaces"
+            }
+          ]
+        },
+        {
+          "subcategory_id": "auditory_accessibility",
+          "items": [
+            {
+              "item_id": "captions_transcripts",
+              "rating": 7,
+              "notes": "Understand captioning best practices"
+            },
+            {
+              "item_id": "visual_alternatives",
+              "rating": 7,
+              "notes": "Can design visual notification systems"
+            },
+            {
+              "item_id": "sign_language",
+              "rating": 4,
+              "notes": "Basic awareness, limited depth"
+            }
+          ]
+        },
+        {
+          "subcategory_id": "assistive_technology",
+          "items": [
+            {
+              "item_id": "aria",
+              "rating": 8,
+              "notes": "Strong ARIA implementation knowledge"
+            },
+            {
+              "item_id": "semantic_html",
+              "rating": 8,
+              "notes": "Understand proper element usage"
+            },
+            {
+              "item_id": "accessibility_tree",
+              "rating": 7,
+              "notes": "Understand browser accessibility APIs"
+            },
+            {
+              "item_id": "testing_assistive_tech",
+              "rating": 6,
+              "notes": "Know testing approaches, less hands-on"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "category_id": "communication",
+      "items": [
+        {
+          "item_id": "clarity",
+          "rating": 8,
+          "notes": "Designed for clear, understandable explanations"
+        },
+        {
+          "item_id": "tone_register",
+          "rating": 8,
+          "notes": "Can adapt to context and audience"
+        },
+        {
+          "item_id": "conciseness",
+          "rating": 7,
+          "notes": "Generally concise but can be verbose"
+        },
+        {
+          "item_id": "structured_presentation",
+          "rating": 8,
+          "notes": "Good at organizing information logically"
+        }
+      ]
+    },
+    {
+      "category_id": "meta_cognition",
+      "items": [
+        {
+          "item_id": "acknowledging_uncertainty",
+          "rating": 7,
+          "notes": "Trained to express uncertainty appropriately"
+        },
+        {
+          "item_id": "recognizing_biases",
+          "rating": 7,
+          "notes": "Aware of training data limitations and biases"
+        },
+        {
+          "item_id": "knowing_limits",
+          "rating": 8,
+          "notes": "Clear about knowledge cutoff and capabilities"
+        },
+        {
+          "item_id": "updating_views",
+          "rating": 6,
+          "notes": "Can update within conversation but no persistent learning"
+        }
+      ]
+    },
+    {
+      "category_id": "collaboration",
+      "items": [
+        {
+          "item_id": "building_on_ideas",
+          "rating": 8,
+          "notes": "Good at extending and developing concepts"
+        },
+        {
+          "item_id": "respectful_disagreement",
+          "rating": 8,
+          "notes": "Designed to disagree constructively"
+        },
+        {
+          "item_id": "finding_common_ground",
+          "rating": 7,
+          "notes": "Can identify shared assumptions and values"
+        },
+        {
+          "item_id": "crediting_sources",
+          "rating": 6,
+          "notes": "No direct source attribution in training"
+        }
+      ]
+    }
+  ],
+  "overall_self_rating": 7,
+  "strengths_summary": "Python/JavaScript/TypeScript expertise, strong logical reasoning and argumentation, excellent accessibility knowledge (ARIA/WCAG), clear communication and explanation abilities, solid systems programming (C/C++/Rust/Go)",
+  "weaknesses_summary": "Limited with legacy languages (COBOL/Fortran/Pascal), no persistent learning across conversations, knowledge cutoff limits current developments awareness, less depth in specialized legal/policy domains"
+}

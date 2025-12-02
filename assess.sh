@@ -215,7 +215,13 @@ main() {
     echo -e "${PURPLE}╚════════════════════════════════════════════════════╝${NC}"
     echo ""
 
-    local questionnaire_file="$COUNCIL_ROOT/config/questionnaire_v1.json"
+    # Prefer TOON, fall back to JSON
+    local questionnaire_file
+    if [[ -f "$COUNCIL_ROOT/config/questionnaire_v1.toon" ]]; then
+        questionnaire_file="$COUNCIL_ROOT/config/questionnaire_v1.toon"
+    else
+        questionnaire_file="$COUNCIL_ROOT/config/questionnaire_v1.json"
+    fi
 
     case "$MODE" in
         full)

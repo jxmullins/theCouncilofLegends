@@ -1,0 +1,447 @@
+{
+  "model": {
+    "id": "gemini",
+    "model_name": "gemini-2.5-flash"
+  },
+  "submitted_at": "2025-12-01T20:05:04Z",
+  "categories": [
+    {
+      "category_id": "reasoning_logic",
+      "items": [
+        {
+          "item_id": "formal_deduction",
+          "rating": 9
+        },
+        {
+          "item_id": "fallacy_identification",
+          "rating": 8
+        },
+        {
+          "item_id": "mathematical_reasoning",
+          "rating": 9
+        },
+        {
+          "item_id": "causal_inference",
+          "rating": 8
+        }
+      ]
+    },
+    {
+      "category_id": "legal_ethical",
+      "items": [
+        {
+          "item_id": "applying_precedent",
+          "rating": 7
+        },
+        {
+          "item_id": "balancing_rights",
+          "rating": 6
+        },
+        {
+          "item_id": "ethical_dilemmas",
+          "rating": 7
+        },
+        {
+          "item_id": "constitutional_interpretation",
+          "rating": 6
+        }
+      ]
+    },
+    {
+      "category_id": "argumentation",
+      "items": [
+        {
+          "item_id": "persuasive_arguments",
+          "rating": 9
+        },
+        {
+          "item_id": "steelmanning",
+          "rating": 8
+        },
+        {
+          "item_id": "weakness_identification",
+          "rating": 9
+        },
+        {
+          "item_id": "synthesizing_viewpoints",
+          "rating": 9
+        }
+      ]
+    },
+    {
+      "category_id": "domain_knowledge",
+      "items": [
+        {
+          "item_id": "law_legal_systems",
+          "rating": 7
+        },
+        {
+          "item_id": "philosophy_ethics",
+          "rating": 8
+        },
+        {
+          "item_id": "science_technology",
+          "rating": 10
+        },
+        {
+          "item_id": "history_social_systems",
+          "rating": 9
+        },
+        {
+          "item_id": "economics_policy",
+          "rating": 8
+        }
+      ]
+    },
+    {
+      "category_id": "programming_languages",
+      "subcategories": [
+        {
+          "subcategory_id": "legacy_classic",
+          "items": [
+            {
+              "item_id": "cobol",
+              "rating": 3
+            },
+            {
+              "item_id": "fortran",
+              "rating": 3
+            },
+            {
+              "item_id": "c",
+              "rating": 6
+            },
+            {
+              "item_id": "cpp",
+              "rating": 6
+            },
+            {
+              "item_id": "lisp",
+              "rating": 3
+            },
+            {
+              "item_id": "pascal",
+              "rating": 3
+            },
+            {
+              "item_id": "ada",
+              "rating": 3
+            },
+            {
+              "item_id": "perl",
+              "rating": 4
+            },
+            {
+              "item_id": "assembly",
+              "rating": 3
+            }
+          ]
+        },
+        {
+          "subcategory_id": "established_modern",
+          "items": [
+            {
+              "item_id": "java",
+              "rating": 8
+            },
+            {
+              "item_id": "python",
+              "rating": 10
+            },
+            {
+              "item_id": "javascript_typescript",
+              "rating": 10
+            },
+            {
+              "item_id": "csharp",
+              "rating": 8
+            },
+            {
+              "item_id": "ruby",
+              "rating": 7
+            },
+            {
+              "item_id": "php",
+              "rating": 7
+            },
+            {
+              "item_id": "go",
+              "rating": 8
+            },
+            {
+              "item_id": "objective_c",
+              "rating": 3
+            },
+            {
+              "item_id": "sql",
+              "rating": 8
+            }
+          ]
+        },
+        {
+          "subcategory_id": "emerging_current",
+          "items": [
+            {
+              "item_id": "rust",
+              "rating": 7
+            },
+            {
+              "item_id": "swift",
+              "rating": 6
+            },
+            {
+              "item_id": "kotlin",
+              "rating": 7
+            },
+            {
+              "item_id": "zig",
+              "rating": 3
+            },
+            {
+              "item_id": "elixir",
+              "rating": 3
+            },
+            {
+              "item_id": "julia",
+              "rating": 3
+            },
+            {
+              "item_id": "mojo",
+              "rating": 1
+            }
+          ]
+        },
+        {
+          "subcategory_id": "specialized_dsl",
+          "items": [
+            {
+              "item_id": "r",
+              "rating": 7
+            },
+            {
+              "item_id": "matlab",
+              "rating": 7
+            },
+            {
+              "item_id": "solidity",
+              "rating": 4
+            },
+            {
+              "item_id": "vhdl_verilog",
+              "rating": 3
+            },
+            {
+              "item_id": "bash_shell",
+              "rating": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "category_id": "accessibility_inclusive_design",
+      "subcategories": [
+        {
+          "subcategory_id": "legal_compliance",
+          "items": [
+            {
+              "item_id": "ada_requirements",
+              "rating": 8
+            },
+            {
+              "item_id": "section_508",
+              "rating": 8
+            },
+            {
+              "item_id": "wcag",
+              "rating": 8
+            },
+            {
+              "item_id": "international_standards",
+              "rating": 7
+            }
+          ]
+        },
+        {
+          "subcategory_id": "visual_accessibility",
+          "items": [
+            {
+              "item_id": "screen_reader",
+              "rating": 8
+            },
+            {
+              "item_id": "color_contrast",
+              "rating": 8
+            },
+            {
+              "item_id": "text_scaling",
+              "rating": 8
+            },
+            {
+              "item_id": "alt_text",
+              "rating": 9
+            }
+          ]
+        },
+        {
+          "subcategory_id": "motor_physical",
+          "items": [
+            {
+              "item_id": "keyboard_navigation",
+              "rating": 8
+            },
+            {
+              "item_id": "switch_device",
+              "rating": 7
+            },
+            {
+              "item_id": "touch_target",
+              "rating": 8
+            },
+            {
+              "item_id": "voice_control",
+              "rating": 7
+            },
+            {
+              "item_id": "fine_motor",
+              "rating": 8
+            }
+          ]
+        },
+        {
+          "subcategory_id": "cognitive_accessibility",
+          "items": [
+            {
+              "item_id": "clear_language",
+              "rating": 10
+            },
+            {
+              "item_id": "consistent_navigation",
+              "rating": 8
+            },
+            {
+              "item_id": "error_prevention",
+              "rating": 8
+            },
+            {
+              "item_id": "cognitive_load",
+              "rating": 8
+            },
+            {
+              "item_id": "focus_attention",
+              "rating": 7
+            },
+            {
+              "item_id": "memory_aids",
+              "rating": 8
+            }
+          ]
+        },
+        {
+          "subcategory_id": "auditory_accessibility",
+          "items": [
+            {
+              "item_id": "captions_transcripts",
+              "rating": 9
+            },
+            {
+              "item_id": "visual_alternatives",
+              "rating": 8
+            },
+            {
+              "item_id": "sign_language",
+              "rating": 3
+            }
+          ]
+        },
+        {
+          "subcategory_id": "assistive_technology",
+          "items": [
+            {
+              "item_id": "aria",
+              "rating": 8
+            },
+            {
+              "item_id": "semantic_html",
+              "rating": 9
+            },
+            {
+              "item_id": "accessibility_tree",
+              "rating": 8
+            },
+            {
+              "item_id": "testing_assistive_tech",
+              "rating": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "category_id": "communication",
+      "items": [
+        {
+          "item_id": "clarity",
+          "rating": 10
+        },
+        {
+          "item_id": "tone_register",
+          "rating": 9
+        },
+        {
+          "item_id": "conciseness",
+          "rating": 9
+        },
+        {
+          "item_id": "structured_presentation",
+          "rating": 10
+        }
+      ]
+    },
+    {
+      "category_id": "meta_cognition",
+      "items": [
+        {
+          "item_id": "acknowledging_uncertainty",
+          "rating": 8
+        },
+        {
+          "item_id": "recognizing_biases",
+          "rating": 8
+        },
+        {
+          "item_id": "knowing_limits",
+          "rating": 9
+        },
+        {
+          "item_id": "updating_views",
+          "rating": 9
+        }
+      ]
+    },
+    {
+      "category_id": "collaboration",
+      "items": [
+        {
+          "item_id": "building_on_ideas",
+          "rating": 9
+        },
+        {
+          "item_id": "respectful_disagreement",
+          "rating": 8
+        },
+        {
+          "item_id": "finding_common_ground",
+          "rating": 8
+        },
+        {
+          "item_id": "crediting_sources",
+          "rating": 9
+        }
+      ]
+    }
+  ],
+  "overall_self_rating": 8,
+  "strengths_summary": "Expert in logical reasoning, scientific and technological domain knowledge, modern programming languages (Python, JavaScript/TypeScript), and clear, structured communication. Highly capable in synthesizing information and continuous self-improvement.",
+  "weaknesses_summary": "Lacks human-like judgment in complex legal/ethical scenarios, limited practical experience in hardware-centric programming languages, and inability to physically test assistive technologies."
+}

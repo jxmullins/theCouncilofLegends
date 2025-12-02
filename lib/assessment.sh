@@ -600,7 +600,7 @@ extract_json_from_response() {
 #=============================================================================
 
 # Build the prompt for an AI to complete the self-assessment questionnaire
-# Args: $1 = path to questionnaire JSON
+# Args: $1 = path to questionnaire (TOON or JSON)
 # Returns: Prompt text for the AI
 build_questionnaire_prompt() {
     local questionnaire_file="$1"
@@ -610,9 +610,15 @@ build_questionnaire_prompt() {
         return 1
     fi
 
-    # Read questionnaire
+    # Read questionnaire (convert TOON to JSON if needed)
     local questionnaire
-    questionnaire=$(cat "$questionnaire_file")
+    if [[ "$questionnaire_file" == *.toon ]]; then
+        # Use TOON util to decode to JSON
+        local toon_util="${COUNCIL_ROOT:-$SCRIPT_DIR/..}/lib/toon_util.py"
+        questionnaire=$("$toon_util" decode "$questionnaire_file" 2>/dev/null)
+    else
+        questionnaire=$(cat "$questionnaire_file")
+    fi
 
     # Build the prompt
     cat <<'PROMPT_START'
@@ -1011,12 +1017,20 @@ run_all_peer_reviews() {
 # Args: $1 = base directory
 #       $2 = trigger type
 #       $3 = trigger details (optional)
-#       $4 = questionnaire file (optional, defaults to config/questionnaire_v1.json)
+#       $4 = questionnaire file (optional, defaults to config/questionnaire_v1.toon or .json)
 run_full_assessment() {
     local base_dir="$1"
     local trigger="$2"
     local trigger_details="${3:-}"
-    local questionnaire_file="${4:-$base_dir/config/questionnaire_v1.json}"
+    # Prefer TOON, fall back to JSON
+    local questionnaire_file="${4:-}"
+    if [[ -z "$questionnaire_file" ]]; then
+        if [[ -f "$base_dir/config/questionnaire_v1.toon" ]]; then
+            questionnaire_file="$base_dir/config/questionnaire_v1.toon"
+        else
+            questionnaire_file="$base_dir/config/questionnaire_v1.json"
+        fi
+    fi
 
     header "Council Assessment Cycle"
 
@@ -1074,11 +1088,23 @@ run_full_assessment() {
 # Args: $1 = assessment directory
 build_baseline_analysis_prompt() {
     local assessment_dir="$1"
-    local questionnaire_file="$COUNCIL_ROOT/config/questionnaire_v1.json"
 
-    # Build questionnaire categories list
+    # Prefer TOON, fall back to JSON
+    local questionnaire_file
+    if [[ -f "$COUNCIL_ROOT/config/questionnaire_v1.toon" ]]; then
+        questionnaire_file="$COUNCIL_ROOT/config/questionnaire_v1.toon"
+    else
+        questionnaire_file="$COUNCIL_ROOT/config/questionnaire_v1.json"
+    fi
+
+    # Build questionnaire categories list (decode TOON if needed)
     local categories
-    categories=$(jq -r '.categories[] | .id' "$questionnaire_file" | tr '\n' ', ')
+    if [[ "$questionnaire_file" == *.toon ]]; then
+        local toon_util="${COUNCIL_ROOT:-$SCRIPT_DIR/..}/lib/toon_util.py"
+        categories=$("$toon_util" decode "$questionnaire_file" 2>/dev/null | jq -r '.categories[] | .id' | tr '\n' ', ')
+    else
+        categories=$(jq -r '.categories[] | .id' "$questionnaire_file" | tr '\n' ', ')
+    fi
 
     # Get anonymization map
     local anon_map
@@ -1229,11 +1255,23 @@ run_baseline_analysis() {
 build_topic_analysis_prompt() {
     local topic="$1"
     local context="${2:-No additional context provided.}"
-    local questionnaire_file="$COUNCIL_ROOT/config/questionnaire_v1.json"
 
-    # Build compact category structure
+    # Prefer TOON, fall back to JSON
+    local questionnaire_file
+    if [[ -f "$COUNCIL_ROOT/config/questionnaire_v1.toon" ]]; then
+        questionnaire_file="$COUNCIL_ROOT/config/questionnaire_v1.toon"
+    else
+        questionnaire_file="$COUNCIL_ROOT/config/questionnaire_v1.json"
+    fi
+
+    # Build compact category structure (decode TOON if needed)
     local categories
-    categories=$(jq -r '.categories[] | "- \(.id): \(.name)"' "$questionnaire_file")
+    if [[ "$questionnaire_file" == *.toon ]]; then
+        local toon_util="${COUNCIL_ROOT:-$SCRIPT_DIR/..}/lib/toon_util.py"
+        categories=$("$toon_util" decode "$questionnaire_file" 2>/dev/null | jq -r '.categories[] | "- \(.id): \(.name)"')
+    else
+        categories=$(jq -r '.categories[] | "- \(.id): \(.name)"' "$questionnaire_file")
+    fi
 
     cat <<EOF
 Analyze this debate topic and assign relevance weights (0.0-1.0) to each category.

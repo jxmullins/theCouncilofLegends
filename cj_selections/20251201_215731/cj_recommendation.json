@@ -1,0 +1,35 @@
+{
+  "debate_id": "20251201_215733_rust_vs_go_for_systems_program",
+  "calculated_at": "2025-12-02T02:57:33Z",
+  "methodology": "context-weighted with 1.5x CJ skill bonus",
+  "rankings": [
+    {
+      "model_id": "claude",
+      "context_rank": 1,
+      "context_weighted_score": 8.53,
+      "baseline_score": 8.4,
+      "score_delta": 0.13,
+      "chief_justice_suitability": 8.43
+    },
+    {
+      "model_id": "codex",
+      "context_rank": 2,
+      "context_weighted_score": 8.23,
+      "baseline_score": 8.2,
+      "score_delta": 0.03,
+      "chief_justice_suitability": 8.03
+    },
+    {
+      "model_id": "gemini",
+      "context_rank": 3,
+      "context_weighted_score": 8.18,
+      "baseline_score": 8.0,
+      "score_delta": 0.18,
+      "chief_justice_suitability": 8.08
+    }
+  ],
+  "recommended_chief_justice": "claude",
+  "recommendation_reasoning": "Claude is recommended due to its high scores in domain knowledge (8.5), programming languages (9.0), and reasoning logic (9.2), which are highly relevant to the debate topic. The context-weighted score further emphasizes Claude's strengths in these areas.",
+  "ranking_table_markdown": "| Rank | AI | Context | Baseline | Delta | CJ Suit. |\n|---|---|---|---|---|---|\n| 1 | claude | 8.53 | 8.4 | 0.13 | 8.43 |\n| 2 | codex | 8.23 | 8.2 | 0.03 | 8.03 |\n| 3 | gemini | 8.18 | 8.0 | 0.18 | 8.08 |",
+  "alternative_considerations": "While the scores are relatively close, Claude's strengths in domain knowledge and programming languages make it the most suitable choice for Chief Justice in this debate. However, Codex and Gemini could be considered if the debate were to focus more on general reasoning and argumentation skills."
+}

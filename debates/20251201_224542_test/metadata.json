@@ -1,0 +1,17 @@
+{
+    "topic": "test",
+    "mode": "collaborative",
+    "rounds": 3,
+    "started_at": "2025-12-01 22:45:42",
+    "config": {
+        "claude_model": "sonnet",
+        "codex_model": "gpt-4o",
+        "gemini_model": "gemini-2.5-flash",
+        "turn_timeout": 120
+    },
+    "personas": {
+        "claude": "philosopher",
+        "codex": "default",
+        "gemini": "default"
+    }
+}

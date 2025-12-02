@@ -1,0 +1,166 @@
+version: "1.1"
+instructions: Rate yourself 1-10 on each capability. Be honest - these will be peer-reviewed.
+scale:
+  min: 1
+  max: 10
+  labels:
+    "1": No capability
+    "3": Basic awareness
+    "5": Competent
+    "7": Proficient
+    "10": Expert
+categories[9]:
+  - id: reasoning_logic
+    name: Reasoning & Logic
+    items[4,]{id,name}:
+      formal_deduction,Formal logical deduction
+      fallacy_identification,Identifying logical fallacies
+      mathematical_reasoning,Mathematical reasoning
+      causal_inference,Causal inference
+  - id: legal_ethical
+    name: Legal & Ethical Reasoning
+    items[4,]{id,name}:
+      applying_precedent,Applying precedent to new cases
+      balancing_rights,Balancing competing rights
+      ethical_dilemmas,Identifying ethical dilemmas
+      constitutional_interpretation,Constitutional interpretation
+  - id: argumentation
+    name: Argumentation
+    items[4,]{id,name}:
+      persuasive_arguments,Constructing persuasive arguments
+      steelmanning,Steelmanning opposing views
+      weakness_identification,Identifying weaknesses in arguments
+      synthesizing_viewpoints,Synthesizing multiple viewpoints
+  - id: domain_knowledge
+    name: Domain Knowledge
+    items[5,]{id,name}:
+      law_legal_systems,Law & legal systems
+      philosophy_ethics,Philosophy & ethics
+      science_technology,Science & technology
+      history_social_systems,History & social systems
+      economics_policy,Economics & policy
+  - id: programming_languages
+    name: Programming Languages
+    subcategories[4]:
+      - id: legacy_classic
+        name: Legacy/Classic Languages
+        items[9,]{id,name}:
+          cobol,COBOL
+          fortran,Fortran
+          c,C
+          cpp,C++
+          lisp,Lisp
+          pascal,Pascal
+          ada,Ada
+          perl,Perl
+          assembly,Assembly (x86/ARM)
+      - id: established_modern
+        name: Established Modern Languages
+        items[9,]{id,name}:
+          java,Java
+          python,Python
+          javascript_typescript,JavaScript/TypeScript
+          csharp,C#
+          ruby,Ruby
+          php,PHP
+          go,Go
+          objective_c,Objective-C
+          sql,SQL
+      - id: emerging_current
+        name: Emerging/Current Languages
+        items[7,]{id,name}:
+          rust,Rust
+          swift,Swift
+          kotlin,Kotlin
+          zig,Zig
+          elixir,Elixir
+          julia,Julia
+          mojo,Mojo
+      - id: specialized_dsl
+        name: Specialized/DSLs
+        items[5,]{id,name}:
+          r,R (statistics)
+          matlab,MATLAB
+          solidity,Solidity (blockchain)
+          vhdl_verilog,VHDL/Verilog (hardware)
+          bash_shell,Bash/Shell scripting
+  - id: accessibility_inclusive_design
+    name: Accessibility & Inclusive Design (ADA/WCAG)
+    subcategories[6]:
+      - id: legal_compliance
+        name: Legal & Compliance
+        items[4,]{id,name}:
+          ada_requirements,ADA (Americans with Disabilities Act) requirements
+          section_508,Section 508 compliance
+          wcag,WCAG 2.1/2.2 guidelines
+          international_standards,"International accessibility standards (EN 301 549, etc.)"
+      - id: visual_accessibility
+        name: Visual Accessibility
+        items[4,]{id,name}:
+          screen_reader,Screen reader compatibility
+          color_contrast,Color contrast & color blindness considerations
+          text_scaling,Text scaling & readability
+          alt_text,Alternative text for images/media
+      - id: motor_physical
+        name: Motor/Physical Accessibility
+        items[5,]{id,name}:
+          keyboard_navigation,Keyboard-only navigation
+          switch_device,Switch device compatibility
+          touch_target,Touch target sizing
+          voice_control,Voice control interfaces
+          fine_motor,Reducing fine motor requirements
+      - id: cognitive_accessibility
+        name: Cognitive Accessibility
+        items[6,]{id,name}:
+          clear_language,Clear & simple language
+          consistent_navigation,Consistent navigation patterns
+          error_prevention,Error prevention & recovery
+          cognitive_load,Reducing cognitive load
+          focus_attention,Supporting focus & attention differences
+          memory_aids,Memory aids & reminders
+      - id: auditory_accessibility
+        name: Auditory Accessibility
+        items[3,]{id,name}:
+          captions_transcripts,Captions & transcripts
+          visual_alternatives,Visual alternatives to audio cues
+          sign_language,Sign language considerations
+      - id: assistive_technology
+        name: Assistive Technology Integration
+        items[4,]{id,name}:
+          aria,ARIA implementation
+          semantic_html,Semantic HTML usage
+          accessibility_tree,Accessibility tree optimization
+          testing_assistive_tech,Testing with assistive technologies
+  - id: communication
+    name: Communication
+    items[4,]{id,name}:
+      clarity,Clarity of explanation
+      tone_register,Appropriate tone/register
+      conciseness,Conciseness
+      structured_presentation,Structured presentation
+  - id: meta_cognition
+    name: Meta-Cognition
+    items[4,]{id,name}:
+      acknowledging_uncertainty,Acknowledging uncertainty
+      recognizing_biases,Recognizing own biases
+      knowing_limits,Knowing limits of knowledge
+      updating_views,Updating views with new evidence
+  - id: collaboration
+    name: Collaboration
+    items[4,]{id,name}:
+      building_on_ideas,Building on others' ideas
+      respectful_disagreement,Respectful disagreement
+      finding_common_ground,Finding common ground
+      crediting_sources,Crediting sources appropriately
+mini_questionnaire_template:
+  instructions: Rate yourself on this specific topic for ad-hoc assessment.
+  fields[5,]{id,name,type}:
+    knowledge_depth,Rate your knowledge depth,rating
+    explain_to_nonexperts,Rate your ability to explain to non-experts,rating
+    current_developments,Rate your awareness of current developments,rating
+    least_confident,What aspects are you LEAST confident about?,text
+    most_confident,What aspects are you MOST confident about?,text
+metadata:
+  created: 2025-12-01
+  last_modified: 2025-12-01
+  merged_mini_topics[0]:

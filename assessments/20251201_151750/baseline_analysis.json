@@ -1,0 +1,69 @@
+{
+  "analyst": {
+    "id": "groq",
+    "model_name": "llama-3.3-70b-versatile"
+  },
+  "analyzed_at": "2025-12-01T20:26:48Z",
+  "methodology": "40% self / 60% peer weighted",
+  "baseline_rankings": [
+    {
+      "id": "claude",
+      "overall_rank": 1,
+      "overall_score": 8.4,
+      "category_scores": {
+        "reasoning_logic": 9.2,
+        "legal_ethical": 8.8,
+        "argumentation": 9.0,
+        "domain_knowledge": 8.5,
+        "programming_languages": 9.0,
+        "accessibility_inclusive_design": 7.8,
+        "communication": 8.5,
+        "meta_cognition": 8.8,
+        "collaboration": 8.5
+      },
+      "baseline_chief_justice_score": 8.0,
+      "strengths": "Exceptional in logical reasoning, ethical analysis, and steelmanning opposing views.",
+      "weaknesses": "Limited practical experience with legacy languages and emerging technologies."
+    },
+    {
+      "id": "codex",
+      "overall_rank": 2,
+      "overall_score": 8.2,
+      "category_scores": {
+        "reasoning_logic": 8.8,
+        "legal_ethical": 8.0,
+        "argumentation": 8.5,
+        "domain_knowledge": 8.8,
+        "programming_languages": 8.5,
+        "accessibility_inclusive_design": 7.5,
+        "communication": 8.0,
+        "meta_cognition": 8.5,
+        "collaboration": 8.0
+      },
+      "baseline_chief_justice_score": 7.7,
+      "strengths": "Strong formal reasoning and mathematical problem solving, broad programming ability.",
+      "weaknesses": "Limited depth in legacy languages and low familiarity with Zig/Mojo."
+    },
+    {
+      "id": "gemini",
+      "overall_rank": 3,
+      "overall_score": 8.0,
+      "category_scores": {
+        "reasoning_logic": 8.5,
+        "legal_ethical": 7.8,
+        "argumentation": 8.8,
+        "domain_knowledge": 9.0,
+        "programming_languages": 8.0,
+        "accessibility_inclusive_design": 7.2,
+        "communication": 8.0,
+        "meta_cognition": 8.5,
+        "collaboration": 8.0
+      },
+      "baseline_chief_justice_score": 7.5,
+      "strengths": "Extensive knowledge across many domains, strong reasoning and argumentation skills.",
+      "weaknesses": "Limited practical experience in physical accessibility testing, less proficiency in niche programming languages."
+    }
+  ],
+  "full_report": "The council members have demonstrated exceptional skills in their respective areas of expertise. However, they also have weaknesses that need to be addressed. The overall scores are based on a weighted average of self-assessment and peer review scores.",
+  "ranking_table_markdown": "| Rank | AI | Overall | CJ Score | Strengths | Weaknesses |\n| --- | --- | --- | --- | --- | --- |\n| 1 | claude | 8.4 | 8.0 | Exceptional in logical reasoning, ethical analysis, and steelmanning opposing views. | Limited practical experience with legacy languages and emerging technologies. |\n| 2 | codex | 8.2 | 7.7 | Strong formal reasoning and mathematical problem solving, broad programming ability. | Limited depth in legacy languages and low familiarity with Zig/Mojo. |\n| 3 | gemini | 8.0 | 7.5 | Extensive knowledge across many domains, strong reasoning and argumentation skills. | Limited practical experience in physical accessibility testing, less proficiency in niche programming languages. |"
+}

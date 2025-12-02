@@ -117,25 +117,23 @@ show_personas() {
     echo -e "${WHITE}Any persona can be assigned to any AI member.${NC}"
     echo ""
 
-    local personas_dir="$COUNCIL_ROOT/config/personas"
-    for persona_file in "$personas_dir"/*.json; do
-        if [[ -f "$persona_file" ]]; then
-            local persona_id name description author version tags
-            persona_id=$(basename "$persona_file" .json)
-            name=$(jq -r '.name' "$persona_file")
-            description=$(jq -r '.description' "$persona_file")
-            author=$(jq -r '.author // "Unknown"' "$persona_file")
-            version=$(jq -r '.version' "$persona_file")
-            tags=$(jq -r '.tags // [] | join(", ")' "$persona_file")
+    # Use list_all_personas from config.sh (handles both TOON and JSON)
+    while IFS='|' read -r persona_id name description; do
+        if [[ -n "$persona_id" ]]; then
+            local persona_file author version tags
+            persona_file=$(get_persona_file "$persona_id")
+            author=$(read_persona_field "$persona_file" "author")
+            version=$(read_persona_field "$persona_file" "version")
+            tags=$(get_persona_tags "$persona_id")
 
             printf "  ${BOLD}%-18s${NC} %s\n" "$persona_id" "$description"
-            printf "    ${WHITE}v%s by %s${NC}" "$version" "$author"
+            printf "    ${WHITE}v%s by %s${NC}" "$version" "${author:-Unknown}"
             if [[ -n "$tags" ]]; then
                 printf " ${CYAN}[%s]${NC}" "$tags"
             fi
             echo ""
         fi
-    done
+    done < <(list_all_personas)
 
     echo ""
     echo -e "${BOLD}Usage:${NC}"

@@ -1,0 +1,19 @@
+{
+  "chief_justice": "claude",
+  "majority_position": "affirm",
+  "vote_summary": "2-1",
+  "assignments": {
+    "majority": {
+      "author": "codex",
+      "reason": "Strongest advocate for affirm position"
+    },
+    "dissent": {
+      "author": "claude",
+      "reason": "Primary advocate for minority position"
+    },
+    "concurrence": {
+      "author": "gemini",
+      "reason": "Joined majority with potentially different reasoning"
+    }
+  }
+}

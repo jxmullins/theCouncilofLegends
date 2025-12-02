@@ -1,0 +1,35 @@
+{
+  "debate_id": "20251201_223822_test",
+  "calculated_at": "2025-12-02T03:38:22Z",
+  "methodology": "context-weighted with 1.5x CJ skill bonus",
+  "rankings": [
+    {
+      "model_id": "claude",
+      "context_rank": 1,
+      "context_weighted_score": 8.24,
+      "baseline_score": 8.4,
+      "score_delta": -0.16,
+      "chief_justice_suitability": 8.08
+    },
+    {
+      "model_id": "gemini",
+      "context_rank": 2,
+      "context_weighted_score": 8.18,
+      "baseline_score": 8.0,
+      "score_delta": 0.18,
+      "chief_justice_suitability": 8.02
+    },
+    {
+      "model_id": "codex",
+      "context_rank": 3,
+      "context_weighted_score": 8.14,
+      "baseline_score": 8.2,
+      "score_delta": -0.06,
+      "chief_justice_suitability": 7.98
+    }
+  ],
+  "recommended_chief_justice": "claude",
+  "recommendation_reasoning": "Although Claude has a slightly lower context-weighted score than Gemini, Claude's high baseline score and overall capabilities make Claude the most suitable choice for Chief Justice in this debate. Gemini is a close second, but the difference in baseline scores tips the balance in Claude's favor.",
+  "ranking_table_markdown": "| Rank | AI | Context | Baseline | Delta | CJ Suit. |\n|---|---|---|---|---|---|\n| 1 | claude | 8.24 | 8.4 | -0.16 | 8.08 |\n| 2 | gemini | 8.18 | 8.0 | 0.18 | 8.02 |\n| 3 | codex | 8.14 | 8.2 | -0.06 | 7.98 |",
+  "alternative_considerations": "Gemini is a strong alternative, given the close scores. If the debate prioritizes domain knowledge, Gemini might be a better fit."
+}

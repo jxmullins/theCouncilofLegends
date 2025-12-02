@@ -1,0 +1,35 @@
+{
+  "debate_id": "20251201_220405_rust_vs_go_for_systems_program",
+  "calculated_at": "2025-12-02T03:04:05Z",
+  "methodology": "context-weighted with 1.5x CJ skill bonus",
+  "rankings": [
+    {
+      "model_id": "claude",
+      "context_rank": 1,
+      "context_weighted_score": 8.55,
+      "baseline_score": 8.4,
+      "score_delta": 0.15,
+      "chief_justice_suitability": 8.53
+    },
+    {
+      "model_id": "codex",
+      "context_rank": 2,
+      "context_weighted_score": 8.23,
+      "baseline_score": 8.2,
+      "score_delta": 0.03,
+      "chief_justice_suitability": 8.01
+    },
+    {
+      "model_id": "gemini",
+      "context_rank": 3,
+      "context_weighted_score": 8.18,
+      "baseline_score": 8.0,
+      "score_delta": 0.18,
+      "chief_justice_suitability": 8.08
+    }
+  ],
+  "recommended_chief_justice": "claude",
+  "recommendation_reasoning": "Claude is recommended as Chief Justice due to its high scores in domain_knowledge, programming_languages, and reasoning_logic, which are highly relevant to the topic of Rust vs Go for systems programming.",
+  "ranking_table_markdown": "| Rank | AI | Context | Baseline | Delta | CJ Suit. |\n|---|---|---|---|---|---|\n| 1 | claude | 8.55 | 8.4 | 0.15 | 8.53 |\n| 2 | codex | 8.23 | 8.2 | 0.03 | 8.01 |\n| 3 | gemini | 8.18 | 8.0 | 0.18 | 8.08 |",
+  "alternative_considerations": "While Claude is the top recommendation, Gemini's high domain_knowledge score and moderate increases in other areas make it a close alternative, but its lower overall context-weighted score keeps it in third place."
+}
