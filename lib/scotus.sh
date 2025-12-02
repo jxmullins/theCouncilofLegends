@@ -98,7 +98,7 @@ run_scotus_opening_round() {
         if invoke_ai "$ai" "$prompt" "$output_file" "$system_prompt"; then
             display_response "$ai" "$output_file"
         else
-            handle_ai_failure "$ai" "opening" "$output_file"
+            handle_ai_failure "$ai" "opening" "$output_file" "$prompt" "$system_prompt"
         fi
     done
 }
@@ -166,7 +166,7 @@ run_scotus_rebuttal_round() {
         if invoke_ai "$ai" "$prompt" "$output_file" "$system_prompt"; then
             display_response "$ai" "$output_file"
         else
-            handle_ai_failure "$ai" "round $round" "$output_file"
+            handle_ai_failure "$ai" "round $round" "$output_file" "$prompt" "$system_prompt"
         fi
     done
 }
@@ -448,7 +448,7 @@ Be authoritative but fair. Structure as a formal judicial-style opinion."
     if invoke_ai "$maj_author" "$maj_prompt" "$maj_output" "$maj_system"; then
         display_response "$maj_author" "$maj_output"
     else
-        handle_ai_failure "$maj_author" "majority opinion" "$maj_output"
+        handle_ai_failure "$maj_author" "majority opinion" "$maj_output" "$maj_prompt" "$maj_system"
     fi
 
     # Write Dissent (if any)
@@ -472,7 +472,7 @@ Be respectful but pointed in your disagreement. Structure as a formal judicial-s
         if invoke_ai "$diss_author" "$diss_prompt" "$diss_output" "$diss_system"; then
             display_response "$diss_author" "$diss_output"
         else
-            handle_ai_failure "$diss_author" "dissent" "$diss_output"
+            handle_ai_failure "$diss_author" "dissent" "$diss_output" "$diss_prompt" "$diss_system"
         fi
     fi
 
@@ -497,7 +497,7 @@ Be collegial but distinct. Structure as a formal judicial-style concurrence."
         if invoke_ai "$conc_author" "$conc_prompt" "$conc_output" "$conc_system"; then
             display_response "$conc_author" "$conc_output"
         else
-            handle_ai_failure "$conc_author" "concurrence" "$conc_output"
+            handle_ai_failure "$conc_author" "concurrence" "$conc_output" "$conc_prompt" "$conc_system"
         fi
     fi
 }
@@ -742,6 +742,9 @@ run_scotus_debate() {
     # Round 1: Opening Arguments
     run_scotus_opening_round "$debate_dir" "$topic" "$resolution" "$key_dimensions"
 
+    # Summarize round 1 if enabled (for context efficiency)
+    run_round_summarization "$debate_dir" 1
+
     # Rounds 2-N: CJ Moderation + Rebuttals
     for ((round=2; round<=rounds; round++)); do
         # CJ provides moderation/questions
@@ -749,6 +752,9 @@ run_scotus_debate() {
 
         # AIs respond
         run_scotus_rebuttal_round "$debate_dir" "$topic" "$resolution" "$round"
+
+        # Summarize completed round for context efficiency
+        run_round_summarization "$debate_dir" "$round"
     done
 
     #=========================================================================

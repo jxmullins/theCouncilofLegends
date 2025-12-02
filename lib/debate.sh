@@ -39,6 +39,8 @@ handle_ai_failure() {
     local ai="$1"
     local phase="$2"
     local output_file="$3"
+    local prompt="$4"
+    local system_prompt="${5:-}"
 
     log_error "$ai failed during $phase"
 
@@ -86,7 +88,7 @@ run_opening_round() {
         if invoke_ai "$ai" "$prompt" "$output_file" "$system_prompt"; then
             display_response "$ai" "$output_file"
         else
-            handle_ai_failure "$ai" "opening" "$output_file"
+            handle_ai_failure "$ai" "opening" "$output_file" "$prompt" "$system_prompt"
         fi
     done
 }
@@ -118,7 +120,7 @@ run_rebuttal_round() {
         if invoke_ai "$ai" "$prompt" "$output_file" "$system_prompt"; then
             display_response "$ai" "$output_file"
         else
-            handle_ai_failure "$ai" "round $round" "$output_file"
+            handle_ai_failure "$ai" "round $round" "$output_file" "$prompt" "$system_prompt"
         fi
     done
 }
@@ -149,7 +151,7 @@ run_synthesis_round() {
         if invoke_ai "$ai" "$prompt" "$output_file" "$system_prompt"; then
             display_response "$ai" "$output_file"
         else
-            handle_ai_failure "$ai" "synthesis" "$output_file"
+            handle_ai_failure "$ai" "synthesis" "$output_file" "$prompt" "$system_prompt"
         fi
     done
 }
@@ -227,9 +229,14 @@ run_debate() {
     # Round 1: Opening Statements
     run_opening_round "$debate_dir" "$topic" "$mode"
 
+    # Summarize round 1 if enabled (for context efficiency in later rounds)
+    run_round_summarization "$debate_dir" 1
+
     # Rounds 2-N: Rebuttals
     for ((round=2; round<=rounds; round++)); do
         run_rebuttal_round "$debate_dir" "$topic" "$mode" "$round"
+        # Summarize completed round for future context efficiency
+        run_round_summarization "$debate_dir" "$round"
     done
 
     # Final: Individual Syntheses

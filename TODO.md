@@ -100,6 +100,20 @@ Chief Justice is selected **per-debate** based on topic relevance to each AI's s
 ## Ideas
 <!-- Raw thoughts to classify later -->
 
+### Codex Suggestions (Dec 2024)
+Features leveraging the multi-AI architecture:
+
+- [ ] **Round Referee & Scoreboard** - Arbiter grades each AI after rounds on clarity, evidence, responsiveness; shows running scoreboard plus "next-round nudge" notes. Keeps debates sharp.
+- [ ] **Cross-Examination Microturns** - Each AI asks a targeted question to another participant; CJ assigns pairings to avoid dogpiles. Forces direct engagement with weak points.
+- [ ] **Coverage Tracker** - Maintain checklist of `key_dimensions` after resolution derivation; flag unaddressed dimensions each round in prompts. Ensures complete outputs.
+- [ ] **Fact-Checking & Citation Agent** - Optional agent that verifies claims against configured sources, adds citations/uncertainty tags. (High complexity)
+- [ ] **Confidence & Calibration Mode** - AIs attach confidence bands to claims; arbiter reconciles into consensus probability in final verdict.
+- [ ] **Debate Resume & Branching** - Persist structured state to resume crashed runs or branch from any round for "what-if" scenarios.
+- [ ] **Structured Telemetry & Replay Log** - JSON event log with timings, prompt hashes, CLI versions, retries, persona selections. Plus lightweight local replay viewer.
+- [ ] **Synthetic Regression Harness** - Stub adapters with canned responses and golden transcripts for CI testing without live LLMs.
+- [ ] **Automatic Persona Matcher** - Auto-pick personas based on topic analysis for coverage diversity (e.g., ethicist + engineer + historian).
+- [ ] **Collaboration Exports (Slack/Notion/PR)** - Push final verdict, opinions, key disagreements to Slack/Notion/PR comments with tl;dr and action items.
+
 ---
 
 ## Inbox

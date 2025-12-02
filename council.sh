@@ -392,6 +392,13 @@ main() {
 
     # Run the debate (route to SCOTUS mode if selected)
     if [[ "$MODE" == "scotus" ]]; then
+        # SCOTUS mode requires a Chief Justice - enforce it
+        if [[ -z "$selected_cj" ]]; then
+            log_warn "SCOTUS mode requires a Chief Justice. Using default."
+            selected_cj="${COUNCIL_MEMBERS[0]}"
+            export CHIEF_JUSTICE="$selected_cj"
+            log_info "Chief Justice (default for SCOTUS): $(get_ai_name "$selected_cj")"
+        fi
         run_scotus_debate "$TOPIC" "$ROUNDS"
     else
         run_debate "$TOPIC" "$MODE" "$ROUNDS"

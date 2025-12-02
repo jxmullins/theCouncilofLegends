@@ -51,6 +51,23 @@ load_config() {
 
     # Ensure debates directory exists
     ensure_dir "$DEBATES_DIR"
+
+    # Refresh persona selections from config (they may have been set in council.conf)
+    refresh_persona_selections
+}
+
+# Refresh persona selections from environment/config variables
+# Called after config is loaded to pick up CLAUDE_PERSONA, etc.
+refresh_persona_selections() {
+    if [[ -n "${CLAUDE_PERSONA:-}" ]]; then
+        PERSONA_SELECTIONS[claude]="$CLAUDE_PERSONA"
+    fi
+    if [[ -n "${CODEX_PERSONA:-}" ]]; then
+        PERSONA_SELECTIONS[codex]="$CODEX_PERSONA"
+    fi
+    if [[ -n "${GEMINI_PERSONA:-}" ]]; then
+        PERSONA_SELECTIONS[gemini]="$GEMINI_PERSONA"
+    fi
 }
 
 #=============================================================================
