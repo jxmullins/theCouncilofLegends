@@ -54,7 +54,7 @@ load_config() {
 }
 
 #=============================================================================
-# Persona Loading (Universal Catalog)
+# Persona Loading (Universal JSON Catalog)
 #=============================================================================
 
 # Global persona selections (can be set via CLI or config)
@@ -87,7 +87,13 @@ get_persona() {
     echo "${PERSONA_SELECTIONS[$ai]:-default}"
 }
 
-# Load persona system prompt (universal catalog with template substitution)
+# Get persona file path (JSON format)
+get_persona_file() {
+    local persona="$1"
+    echo "$COUNCIL_ROOT/config/personas/${persona}.json"
+}
+
+# Load persona system prompt (JSON catalog with template substitution)
 load_persona() {
     local ai="$1"
     local persona="${2:-${PERSONA_SELECTIONS[$ai]:-default}}"
@@ -97,17 +103,16 @@ load_persona() {
     ai_name=$(get_ai_name "$ai")
     provider=$(get_ai_provider "$ai")
 
-    # Universal persona file (config/personas/{persona}.persona)
-    local persona_file="$COUNCIL_ROOT/config/personas/${persona}.persona"
+    # Universal persona file (config/personas/{persona}.json)
+    local persona_file
+    persona_file=$(get_persona_file "$persona")
 
     if [[ -f "$persona_file" ]]; then
-        # Source the persona file to get SYSTEM_PROMPT_TEMPLATE
-        local SYSTEM_PROMPT_TEMPLATE=""
-        # shellcheck source=/dev/null
-        source "$persona_file"
+        # Extract prompt_template from JSON and substitute placeholders
+        local prompt
+        prompt=$(jq -r '.prompt_template' "$persona_file")
 
         # Substitute placeholders in template
-        local prompt="$SYSTEM_PROMPT_TEMPLATE"
         prompt="${prompt//\{\{AI_NAME\}\}/$ai_name}"
         prompt="${prompt//\{\{PROVIDER\}\}/$provider}"
         echo "$prompt"
@@ -121,46 +126,86 @@ load_persona() {
 get_persona_display_name() {
     local ai="$1"
     local persona="${2:-${PERSONA_SELECTIONS[$ai]:-default}}"
-    local persona_file="$COUNCIL_ROOT/config/personas/${persona}.persona"
+    local persona_file
+    persona_file=$(get_persona_file "$persona")
 
     local ai_name
     ai_name=$(get_ai_name "$ai")
 
     if [[ -f "$persona_file" ]]; then
-        local NAME=""
-        # shellcheck source=/dev/null
-        source "$persona_file"
+        local persona_name
+        persona_name=$(jq -r '.name' "$persona_file")
         if [[ "$persona" == "default" ]]; then
             echo "$ai_name"
         else
-            echo "$ai_name (${NAME})"
+            echo "$ai_name (${persona_name})"
         fi
     else
         echo "$ai_name"
     fi
 }
 
-# List all available personas (universal catalog)
+# Get persona metadata field
+get_persona_field() {
+    local persona="$1"
+    local field="$2"
+    local persona_file
+    persona_file=$(get_persona_file "$persona")
+
+    if [[ -f "$persona_file" ]]; then
+        jq -r ".$field // empty" "$persona_file"
+    fi
+}
+
+# List all available personas (JSON catalog)
 list_all_personas() {
     local personas_dir="$COUNCIL_ROOT/config/personas"
 
-    for persona_file in "$personas_dir"/*.persona; do
+    for persona_file in "$personas_dir"/*.json; do
         if [[ -f "$persona_file" ]]; then
-            local ID="" NAME="" DESCRIPTION=""
-            # shellcheck source=/dev/null
-            source "$persona_file"
-            local persona_id
-            persona_id=$(basename "$persona_file" .persona)
-            echo "${persona_id}|${NAME:-$persona_id}|${DESCRIPTION:-No description}"
+            local persona_id name description
+            persona_id=$(basename "$persona_file" .json)
+            name=$(jq -r '.name // empty' "$persona_file")
+            description=$(jq -r '.description // "No description"' "$persona_file")
+            echo "${persona_id}|${name:-$persona_id}|${description}"
         fi
     done
 }
 
-# Validate persona exists (universal catalog)
+# Validate persona exists (JSON catalog)
 validate_persona() {
     local persona="$1"
-    local persona_file="$COUNCIL_ROOT/config/personas/${persona}.persona"
+    local persona_file
+    persona_file=$(get_persona_file "$persona")
     [[ -f "$persona_file" ]]
+}
+
+# Get persona tags (for marketplace/filtering)
+get_persona_tags() {
+    local persona="$1"
+    local persona_file
+    persona_file=$(get_persona_file "$persona")
+
+    if [[ -f "$persona_file" ]]; then
+        jq -r '.tags // [] | join(",")' "$persona_file"
+    fi
+}
+
+# Get persona info (formatted for display)
+get_persona_info() {
+    local persona="$1"
+    local persona_file
+    persona_file=$(get_persona_file "$persona")
+
+    if [[ -f "$persona_file" ]]; then
+        jq -r '
+            "Name: \(.name)\n" +
+            "Version: \(.version)\n" +
+            "Author: \(.author // "Unknown")\n" +
+            "Description: \(.description)\n" +
+            "Tags: \(.tags // [] | join(", "))"
+        ' "$persona_file"
+    fi
 }
 
 get_ai_color() {

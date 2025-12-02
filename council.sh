@@ -118,15 +118,22 @@ show_personas() {
     echo ""
 
     local personas_dir="$COUNCIL_ROOT/config/personas"
-    for persona_file in "$personas_dir"/*.persona; do
+    for persona_file in "$personas_dir"/*.json; do
         if [[ -f "$persona_file" ]]; then
-            # Source to get variables
-            local ID="" NAME="" DESCRIPTION=""
-            # shellcheck source=/dev/null
-            source "$persona_file"
-            local persona_id
-            persona_id=$(basename "$persona_file" .persona)
-            printf "  ${BOLD}%-18s${NC} %s\n" "$persona_id" "${DESCRIPTION:-No description}"
+            local persona_id name description author version tags
+            persona_id=$(basename "$persona_file" .json)
+            name=$(jq -r '.name' "$persona_file")
+            description=$(jq -r '.description' "$persona_file")
+            author=$(jq -r '.author // "Unknown"' "$persona_file")
+            version=$(jq -r '.version' "$persona_file")
+            tags=$(jq -r '.tags // [] | join(", ")' "$persona_file")
+
+            printf "  ${BOLD}%-18s${NC} %s\n" "$persona_id" "$description"
+            printf "    ${WHITE}v%s by %s${NC}" "$version" "$author"
+            if [[ -n "$tags" ]]; then
+                printf " ${CYAN}[%s]${NC}" "$tags"
+            fi
+            echo ""
         fi
     done
 

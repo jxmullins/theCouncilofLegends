@@ -73,15 +73,18 @@ Chief Justice is selected **per-debate** based on topic relevance to each AI's s
 - [ ] Select token-based (local) vs API auth per LLM
 
 ### Persona System
-- [x] Universal persona catalog (`config/personas/*.persona`)
+- [x] Universal JSON persona catalog (`config/personas/*.json`)
+  - [x] JSON schema for validation (`config/schemas/persona_schema.json`)
   - [x] Any persona can be assigned to any AI
   - [x] Template system with `{{AI_NAME}}` and `{{PROVIDER}}` placeholders
+  - [x] Marketplace-ready format: id, name, version, author, description, tags, style
   - [x] 10 personas: default, philosopher, devils_advocate, historian, architect, hacker, security_expert, scientist, futurist, pragmatist
 - [x] Select personas via CLI (`--personas claude:philosopher,codex:hacker`)
-- [x] List available personas (`--list-personas`)
+- [x] List available personas with metadata (`--list-personas`)
 - [x] Persona info in metadata.json and transcripts
 - [ ] Change personas per round (or let LLM decide when to switch)
 - [ ] Create additional themed personas (e.g., educator, optimist, pessimist)
+- [ ] Persona marketplace: import/export, validation, versioning
 
 ## Improvements
 <!-- Enhancements to existing functionality -->

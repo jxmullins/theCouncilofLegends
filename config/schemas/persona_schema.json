@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://counciloflegends.dev/schemas/persona/v1",
+  "title": "Council of Legends Persona",
+  "description": "Schema for AI debate personas in The Council of Legends",
+  "type": "object",
+  "required": ["id", "name", "version", "description", "prompt_template"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Unique identifier (lowercase, underscores allowed)",
+      "examples": ["philosopher", "devils_advocate"]
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50,
+      "description": "Display name for the persona",
+      "examples": ["Philosopher", "Devil's Advocate"]
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version (major.minor.patch)",
+      "examples": ["1.0.0", "2.1.3"]
+    },
+    "author": {
+      "type": "string",
+      "description": "Creator of the persona",
+      "examples": ["Council of Legends", "community@example.com"]
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 200,
+      "description": "Brief description shown in persona list"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      },
+      "uniqueItems": true,
+      "description": "Tags for discovery and categorization",
+      "examples": [["philosophy", "ethics", "socratic"]]
+    },
+    "prompt_template": {
+      "type": "string",
+      "minLength": 100,
+      "description": "System prompt template. Use {{AI_NAME}} and {{PROVIDER}} as placeholders."
+    },
+    "style": {
+      "type": "object",
+      "description": "Optional style metadata for UI/categorization",
+      "properties": {
+        "tone": {
+          "type": "string",
+          "enum": ["formal", "casual", "academic", "provocative", "contemplative", "pragmatic", "enthusiastic"],
+          "description": "Overall communication tone"
+        },
+        "approach": {
+          "type": "string",
+          "description": "Primary debate approach or methodology"
+        },
+        "strengths": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Topics or areas where this persona excels"
+        }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "description": "Compatibility information",
+      "properties": {
+        "min_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Minimum Council of Legends version required"
+        },
+        "modes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["collaborative", "adversarial", "exploratory", "scotus"]
+          },
+          "description": "Debate modes this persona is designed for (empty = all)"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}
