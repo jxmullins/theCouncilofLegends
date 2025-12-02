@@ -14,6 +14,9 @@ invoke_ai() {
     local output_file="$3"
     local system_prompt="${4:-}"
 
+    # Normalize AI name to lowercase for case-insensitive matching
+    ai=$(echo "$ai" | tr '[:upper:]' '[:lower:]')
+
     case "$ai" in
         claude)
             invoke_claude "$prompt" "$output_file" "$system_prompt"

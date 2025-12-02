@@ -37,6 +37,7 @@ source "$COUNCIL_ROOT/lib/adapters/codex_adapter.sh"
 source "$COUNCIL_ROOT/lib/adapters/gemini_adapter.sh"
 source "$COUNCIL_ROOT/lib/adapters/groq_adapter.sh"
 source "$COUNCIL_ROOT/lib/assessment.sh"
+source "$COUNCIL_ROOT/lib/debate.sh"  # Provides invoke_ai function
 source "$COUNCIL_ROOT/lib/team.sh"
 source "$COUNCIL_ROOT/lib/pm.sh"
 source "$COUNCIL_ROOT/lib/work_modes.sh"
