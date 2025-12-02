@@ -13,3 +13,6 @@ tmp/
 
 # Debate outputs (optional - uncomment to ignore)
 # debates/
+
+# Team project outputs (local test/debug data)
+projects/
