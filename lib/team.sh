@@ -11,6 +11,12 @@ if [[ -z "${UTILS_LOADED:-}" ]]; then
     export UTILS_LOADED=true
 fi
 
+# Source roles module for team role personas
+if [[ -z "${ROLES_LOADED:-}" ]]; then
+    source "$SCRIPT_DIR/roles.sh"
+    export ROLES_LOADED=true
+fi
+
 #=============================================================================
 # Constants
 #=============================================================================

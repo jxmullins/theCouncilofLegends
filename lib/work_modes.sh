@@ -11,6 +11,12 @@ if [[ -z "${UTILS_LOADED:-}" ]]; then
     export UTILS_LOADED=true
 fi
 
+# Source roles module for team role personas
+if [[ -z "${ROLES_LOADED:-}" ]]; then
+    source "$SCRIPT_DIR/roles.sh"
+    export ROLES_LOADED=true
+fi
+
 #=============================================================================
 # Work Mode Dispatcher
 #=============================================================================
@@ -375,8 +381,23 @@ run_divide_conquer() {
         description=$(echo "$subtask" | jq -r '.description')
         local subtask_id
         subtask_id=$(echo "$subtask" | jq -r '.id')
+        local role
+        role=$(echo "$subtask" | jq -r '.role // empty')
 
-        ai_header "$assignee" "Subtask: $subtask_id"
+        # Set role for this AI if specified
+        if [[ -n "$role" ]]; then
+            set_role "$assignee" "$role"
+            local role_name
+            role_name=$(get_role_name "$role")
+            ai_header "$assignee" "Subtask: $subtask_id (as $role_name)"
+        else
+            clear_role "$assignee"
+            ai_header "$assignee" "Subtask: $subtask_id"
+        fi
+
+        # Build system prompt with role stacked on identity
+        local system_prompt
+        system_prompt=$(build_role_system_prompt "$assignee")
 
         local prompt="Complete this subtask as part of a larger team effort.
 
@@ -387,15 +408,18 @@ YOUR SUBTASK: $description
 Complete your subtask thoroughly. It will be merged with other team members' work."
 
         local output_file="$project_dir/responses/subtask_${subtask_id}_${assignee}.md"
-        if invoke_ai "$assignee" "$prompt" "$output_file"; then
+        if invoke_ai "$assignee" "$prompt" "$output_file" "$system_prompt"; then
             display_response "$assignee" "$output_file"
             subtask_results+="### Subtask: $subtask_id ($(get_ai_name "$assignee"))
 $(cat "$output_file")
 
 "
         else
-            handle_ai_failure "$assignee" "subtask $subtask_id" "$output_file" "$prompt"
+            handle_ai_failure "$assignee" "subtask $subtask_id" "$output_file" "$prompt" "$system_prompt"
         fi
+
+        # Check for milestone role reassignments after this subtask
+        check_and_apply_milestone_roles "$plan_file" "$subtask_id"
 
         subtask_num=$((subtask_num + 1))
     done <<< "$subtasks"
@@ -535,6 +559,66 @@ Create a comprehensive summary and conclusion based on all contributions."
 
     log_success "Free form collaboration complete"
     return 0
+}
+
+#=============================================================================
+# Role Reassignment at Milestones
+#=============================================================================
+
+# Apply role reassignments from a milestone
+# Args: $1 = plan file, $2 = milestone id or "after" value
+apply_milestone_roles() {
+    local plan_file="$1"
+    local milestone_id="$2"
+
+    # Find milestone and extract role_assignments
+    local role_assignments
+    role_assignments=$(jq -r --arg id "$milestone_id" \
+        '.milestones[]? | select(.id == $id or .after == $id) | .role_assignments // {}' \
+        "$plan_file" 2>/dev/null)
+
+    if [[ -z "$role_assignments" ]] || [[ "$role_assignments" == "{}" ]]; then
+        return 0  # No role reassignments for this milestone
+    fi
+
+    log_info "Applying role reassignments for milestone: $milestone_id"
+
+    # Parse and apply each role assignment
+    local assignments
+    assignments=$(echo "$role_assignments" | jq -r 'to_entries[] | "\(.key):\(.value)"')
+
+    for assignment in $assignments; do
+        if [[ "$assignment" == *":"* ]]; then
+            local ai="${assignment%%:*}"
+            local role="${assignment##*:}"
+            if [[ -n "$role" ]] && [[ "$role" != "null" ]]; then
+                set_role "$ai" "$role"
+                local role_name
+                role_name=$(get_role_name "$role")
+                log_debug "  $ai → $role_name"
+            fi
+        fi
+    done
+
+    # Display current role assignments
+    echo -e "${YELLOW}Role Assignments:${NC} $(get_role_assignments_display)"
+}
+
+# Check for milestone role reassignments after a subtask or round
+# Args: $1 = plan file, $2 = subtask id or round number
+check_and_apply_milestone_roles() {
+    local plan_file="$1"
+    local after_id="$2"
+
+    # Find milestones that trigger after this id
+    local matching_milestones
+    matching_milestones=$(jq -r --arg after "$after_id" \
+        '.milestones[]? | select(.after == $after) | .id // .after' \
+        "$plan_file" 2>/dev/null)
+
+    for milestone in $matching_milestones; do
+        apply_milestone_roles "$plan_file" "$milestone"
+    done
 }
 
 #=============================================================================

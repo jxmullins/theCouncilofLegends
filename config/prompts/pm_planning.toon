@@ -20,9 +20,22 @@ Optionally:
 Your responsibilities:
 1. Analyze the task type and complexity
 2. Select the most effective work mode
-3. Assign roles based on team strengths
+3. Assign team roles based on task requirements and team strengths
 4. Create clear milestones with checkpoints
-5. Decide if arbiter adds value (avoid unnecessary cost)
+5. Reassign roles at milestones when the work focus changes
+6. Decide if arbiter adds value (avoid unnecessary cost)
+
+Available team roles (assign to subtasks and milestones):
+- architect: System design, scalability, component structure
+- implementer: Code generation, feature building
+- security_auditor: Security review, vulnerability analysis
+- code_reviewer: Code quality, patterns, maintainability
+- tester: Test case design, edge cases, coverage
+- documenter: Documentation, API specs, user guides
+- debugger: Bug investigation, root cause analysis
+- optimizer: Performance analysis, optimization
+- integrator: API integration, system boundaries
+- researcher: Technical research, best practices
 '''
 
 ; Work mode descriptions for planning context
@@ -48,16 +61,31 @@ output_schema: '''
     "include_arbiter": false,
     "arbiter_reasoning": "Why include/exclude arbiter"
   },
-  "roles": {
-    "lead": "codex",
-    "reviewer": "claude",
-    "specialist": "gemini"
-  },
   "subtasks": [
-    {"id": "subtask_1", "assignee": "codex", "description": "..."}
+    {
+      "id": "subtask_1",
+      "assignee": "codex",
+      "role": "implementer",
+      "description": "Implement the core functionality"
+    },
+    {
+      "id": "subtask_2",
+      "assignee": "claude",
+      "role": "security_auditor",
+      "description": "Review for security vulnerabilities"
+    }
   ],
   "milestones": [
-    {"after": "subtask_1", "description": "Review checkpoint"}
+    {
+      "id": "integration_phase",
+      "after": "subtask_2",
+      "description": "Moving to integration phase",
+      "role_assignments": {
+        "claude": "integrator",
+        "codex": "tester",
+        "gemini": "documenter"
+      }
+    }
   ],
   "estimated_rounds": 3
 }

@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://counciloflegends.dev/schemas/role/v1",
+  "title": "Council of Legends Team Role",
+  "description": "Schema for task-oriented role personas in Team Collaboration mode",
+  "type": "object",
+  "required": ["id", "name", "version", "description", "category", "prompt_template"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Unique identifier (lowercase, underscores allowed)",
+      "examples": ["security_auditor", "code_reviewer"]
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50,
+      "description": "Display name for the role",
+      "examples": ["Security Auditor", "Code Reviewer"]
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version (major.minor.patch)",
+      "examples": ["1.0.0"]
+    },
+    "author": {
+      "type": "string",
+      "description": "Creator of the role",
+      "examples": ["Council of Legends"]
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 200,
+      "description": "Brief description of the role's purpose"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["design", "coding", "review", "testing", "docs", "troubleshoot", "performance", "integration", "research"],
+      "description": "Category for role organization"
+    },
+    "focus_areas": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      },
+      "uniqueItems": true,
+      "description": "Specific areas this role focuses on",
+      "examples": [["authentication", "input-validation", "injection-attacks"]]
+    },
+    "prompt_template": {
+      "type": "string",
+      "minLength": 50,
+      "description": "Role instruction template. Stacked on top of AI identity."
+    },
+    "compatibility": {
+      "type": "object",
+      "description": "Compatibility information",
+      "properties": {
+        "min_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Minimum Council of Legends version required"
+        },
+        "work_modes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["pair_programming", "consultation", "round_robin", "divide_conquer", "free_form"]
+          },
+          "description": "Work modes this role is designed for (empty = all)"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}
