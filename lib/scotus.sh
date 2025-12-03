@@ -17,31 +17,11 @@ derive_resolution() {
 
     log_info "Deriving formal resolution from topic..."
 
-    local system_prompt="You are the Arbiter for The Council of Legends SCOTUS mode. Your task is to convert open-ended topics into formal, debatable resolutions.
+    local system_prompt
+    system_prompt=$(load_template "scotus/resolution_derivation_system")
 
-A good resolution:
-1. Is a clear yes/no proposition that takes a definitive stance
-2. Is specific enough to argue meaningfully
-3. Allows reasonable arguments on both sides
-4. Frames the topic as an affirmative statement to be affirmed or opposed
-
-Output ONLY valid JSON. No markdown, no explanatory text."
-
-    local user_prompt="Convert this open topic into a formal SCOTUS-style resolution:
-
-TOPIC: $topic
-
-Generate a JSON object with:
-- original_topic: The original topic as given
-- resolution: A clear, debatable yes/no proposition (affirmative statement)
-- key_dimensions: 3-5 key aspects that should be considered in debate
-
-Example output format:
-{
-  \"original_topic\": \"Rust vs Go\",
-  \"resolution\": \"Rust is the superior choice for systems programming over Go\",
-  \"key_dimensions\": [\"performance\", \"safety\", \"developer productivity\", \"ecosystem maturity\"]
-}"
+    local user_prompt
+    user_prompt=$(load_template "scotus/resolution_derivation_user" "TOPIC=$topic")
 
     local temp_response="${output_file}.raw"
     if invoke_groq "$user_prompt" "$temp_response" "$system_prompt"; then
@@ -117,13 +97,8 @@ run_cj_moderation() {
     log_info "Chief Justice $cj providing moderation..."
     ai_header "$cj" "Chief Justice Moderation"
 
-    local system_prompt="You are the Chief Justice moderating this SCOTUS-style debate. Your role is to:
-1. Identify areas that need clarification or deeper exploration
-2. Probe weaknesses in arguments presented
-3. Ensure all sides have opportunity to address key points
-4. Synthesize points of agreement and disagreement
-
-Be fair, balanced, and focused on improving the quality of the debate."
+    local system_prompt
+    system_prompt=$(load_template "scotus/cj_moderation_system")
 
     local prompt
     prompt=$(build_cj_moderation_prompt "$topic" "$resolution" "$round" "$debate_dir")
@@ -201,48 +176,15 @@ $(cat "$round_file")
         fi
     done
 
-    local system_prompt="You are analyzing a completed debate transcript to determine the positions each AI took on the resolution. Your task is to:
+    local system_prompt
+    system_prompt=$(load_template "scotus/position_analysis_system")
 
-1. Infer each AI's position on the resolution (affirm/oppose/nuanced)
-2. NOT rely on explicit voting - infer from argumentation patterns
-3. Identify the strongest advocate for each position
-4. Determine majority/minority positions
-
-Be objective. Positions must be inferred from the substance of arguments, not stated preferences.
-
-Output ONLY valid JSON. No markdown, no explanatory text."
-
-    local user_prompt="Analyze this debate and infer positions.
-
-RESOLUTION: $resolution
-
-DEBATE TRANSCRIPT:
-$transcript
-
-For each AI (claude, codex, gemini), determine:
-- Their position: \"affirm\" (supports resolution), \"oppose\" (against resolution), or \"nuanced\" (mixed/unclear)
-- Confidence in that inference (0.0-1.0)
-- Their key contribution to that position
-
-Then determine:
-- Vote tally (how many affirm vs oppose vs nuanced)
-- Majority position (affirm or oppose, whichever has more)
-- Best advocate for majority position
-- Best advocate for minority position (if any)
-
-Output JSON:
-{
-  \"resolution\": \"...\",
-  \"vote_tally\": { \"affirm\": N, \"oppose\": N, \"nuanced\": N },
-  \"majority_position\": \"affirm|oppose\",
-  \"position_by_ai\": {
-    \"claude\": { \"position\": \"...\", \"confidence\": 0.X, \"key_contribution\": \"...\" },
-    \"codex\": { \"position\": \"...\", \"confidence\": 0.X, \"key_contribution\": \"...\" },
-    \"gemini\": { \"position\": \"...\", \"confidence\": 0.X, \"key_contribution\": \"...\" }
-  },
-  \"best_advocate\": { \"majority\": \"...\", \"minority\": \"...\" },
-  \"analysis_notes\": \"...\"
-}"
+    # Build user prompt with dynamic content
+    local user_prompt_template
+    user_prompt_template=$(load_template "scotus/position_analysis_user" "RESOLUTION=$resolution")
+    # Replace transcript placeholder (multi-line content)
+    local user_prompt
+    user_prompt="${user_prompt_template//\{\{TRANSCRIPT\}\}/$transcript}"
 
     local temp_response="${output_file}.raw"
     if invoke_groq "$user_prompt" "$temp_response" "$system_prompt"; then

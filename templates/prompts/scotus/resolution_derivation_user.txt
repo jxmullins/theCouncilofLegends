@@ -1,0 +1,15 @@
+Convert this open topic into a formal SCOTUS-style resolution:
+
+TOPIC: {{TOPIC}}
+
+Generate a JSON object with:
+- original_topic: The original topic as given
+- resolution: A clear, debatable yes/no proposition (affirmative statement)
+- key_dimensions: 3-5 key aspects that should be considered in debate
+
+Example output format:
+{
+  "original_topic": "Rust vs Go",
+  "resolution": "Rust is the superior choice for systems programming over Go",
+  "key_dimensions": ["performance", "safety", "developer productivity", "ecosystem maturity"]
+}

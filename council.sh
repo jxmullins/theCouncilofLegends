@@ -36,6 +36,7 @@ source "$COUNCIL_ROOT/lib/adapters/groq_adapter.sh"
 source "$COUNCIL_ROOT/lib/debate.sh"
 source "$COUNCIL_ROOT/lib/assessment.sh"
 source "$COUNCIL_ROOT/lib/scotus.sh"
+source "$COUNCIL_ROOT/lib/budget.sh"
 
 #=============================================================================
 # Help
@@ -88,6 +89,14 @@ ${BOLD}OPTIONS${NC}
                         Requires GROQ_API_KEY for arbiter
 
     --list-personas  Show all available personas and exit
+
+    --max-cost N     Maximum budget in dollars (e.g., --max-cost 0.50)
+                     Debate stops if budget exceeded
+
+    --profile PROF   Budget profile: frugal, balanced (default), premium
+                     Controls which model variants are used
+
+    --show-costs     Display cost summary at end of debate
 
     --help           Show this help message
 
@@ -199,6 +208,9 @@ parse_args() {
     CHIEF_JUSTICE=""
     SKIP_CJ=false
     PERSONAS_SPEC=""
+    BUDGET_MAX_COST="${BUDGET_MAX_COST:-0}"
+    BUDGET_PROFILE="${BUDGET_PROFILE:-balanced}"
+    SHOW_COSTS=false
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -260,6 +272,26 @@ parse_args() {
                 ;;
             --dynamic-personas)
                 enable_dynamic_personas
+                shift
+                ;;
+            --max-cost)
+                if [[ -z "${2:-}" ]] || [[ "$2" == -* ]]; then
+                    log_error "Option --max-cost requires a value"
+                    exit 1
+                fi
+                BUDGET_MAX_COST="$2"
+                shift 2
+                ;;
+            --profile)
+                if [[ -z "${2:-}" ]] || [[ "$2" == -* ]]; then
+                    log_error "Option --profile requires a value"
+                    exit 1
+                fi
+                BUDGET_PROFILE="$2"
+                shift 2
+                ;;
+            --show-costs)
+                SHOW_COSTS=true
                 shift
                 ;;
             -*)

@@ -1,0 +1,10 @@
+You are analyzing a completed debate transcript to determine the positions each AI took on the resolution. Your task is to:
+
+1. Infer each AI's position on the resolution (affirm/oppose/nuanced)
+2. NOT rely on explicit voting - infer from argumentation patterns
+3. Identify the strongest advocate for each position
+4. Determine majority/minority positions
+
+Be objective. Positions must be inferred from the substance of arguments, not stated preferences.
+
+Output ONLY valid JSON. No markdown, no explanatory text.

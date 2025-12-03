@@ -48,11 +48,11 @@
 
 ## Architectural Improvements (Remaining)
 
-- [ ] **Externalize Prompt Templates**
-    - Create directory `templates/prompts/core/`.
-    - Move prompts from `lib/assessment.sh` (Assessment, Peer Review, Baseline) to separate text files.
-    - Move prompts from `lib/scotus.sh` to separate files.
-    - Implement `load_template()` in `lib/utils.sh` to read these files.
+- [x] **Externalize Prompt Templates**
+    - Created `templates/prompts/` directory with `assessment/`, `scotus/`, and `core/` subdirectories.
+    - Moved prompts from `lib/assessment.sh` (self_assessment, peer_review) to template files.
+    - Moved prompts from `lib/scotus.sh` (resolution_derivation, cj_moderation, position_analysis) to templates.
+    - Implemented `load_template()` and `load_template_with_content()` in `lib/utils.sh`.
 
 - [ ] **Dynamic Model Registry Integration**
     - Refactor `COUNCIL_MEMBERS` to use `lib/llm_manager.sh` registry.
@@ -61,21 +61,32 @@
 
 ## Future Features
 
-- [ ] **Interactive "First Run" Setup**
-    - A `./setup.sh` script that:
-        - Checks dependencies.
-        - Asks for API keys (saving them to a `.env` file, not `config.sh`).
-        - Runs `test_adapters.sh`.
+- [x] **Interactive "First Run" Setup**
+    - Created `./setup.sh` interactive wizard that:
+        - Checks system dependencies (jq, curl, python3).
+        - Verifies AI CLI tools (claude, codex, gemini).
+        - Configures API keys (saves to `.env` file).
+        - Runs `test_adapters.sh` for verification.
 
-- [ ] **Unified Logging**
-    - Create a structured log file (e.g., `logs/latest.log`) in addition to console output.
-    - Include timestamps and log levels for easier debugging.
+- [x] **Unified Logging**
+    - Added `init_logging()` function to create session log files in `logs/`.
+    - All log functions now write to both console and log file with timestamps.
+    - Log levels: DEBUG, INFO, WARN, ERROR (configurable via COUNCIL_LOG_LEVEL).
+    - Added `log_event()` for structured JSON telemetry events.
+    - Symlink `logs/latest.log` points to most recent session.
 
-- [ ] **Budget-Aware Debates**
-    - `--max-cost` and `--profile frugal|balanced|premium` flags.
-    - Track token usage per AI.
-    - Use cheaper models for exploration, expensive for synthesis.
+- [x] **Budget-Aware Debates**
+    - Created `lib/budget.sh` with comprehensive cost tracking.
+    - Added `--max-cost`, `--profile`, and `--show-costs` flags to council.sh.
+    - Token estimation and cost calculation per AI/model.
+    - Budget profiles: frugal (mini models), balanced (default), premium (flagship).
+    - Session-level cost tracking with per-AI breakdown.
+    - `print_budget_report()` for cost summaries.
 
-- [ ] **Structured Telemetry & Replay Log**
-    - JSON event log: timings, prompt hashes, retries, personas.
-    - Lightweight local replay viewer.
+- [x] **Structured Telemetry & Replay Log**
+    - Created `lib/telemetry.sh` with comprehensive event system.
+    - JSON event log (.jsonl format) with timestamps and sequence numbers.
+    - Event types: session, debate, round, AI request/response/error/retry, CJ selection, persona changes.
+    - `emit_*` convenience functions for all event types.
+    - `replay_telemetry()` for human-readable replay of events.
+    - `telemetry_stats()` for event statistics summary.

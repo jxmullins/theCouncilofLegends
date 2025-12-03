@@ -1,0 +1,31 @@
+Analyze this debate and infer positions.
+
+RESOLUTION: {{RESOLUTION}}
+
+DEBATE TRANSCRIPT:
+{{TRANSCRIPT}}
+
+For each AI (claude, codex, gemini), determine:
+- Their position: "affirm" (supports resolution), "oppose" (against resolution), or "nuanced" (mixed/unclear)
+- Confidence in that inference (0.0-1.0)
+- Their key contribution to that position
+
+Then determine:
+- Vote tally (how many affirm vs oppose vs nuanced)
+- Majority position (affirm or oppose, whichever has more)
+- Best advocate for majority position
+- Best advocate for minority position (if any)
+
+Output JSON:
+{
+  "resolution": "...",
+  "vote_tally": { "affirm": N, "oppose": N, "nuanced": N },
+  "majority_position": "affirm|oppose",
+  "position_by_ai": {
+    "claude": { "position": "...", "confidence": 0.X, "key_contribution": "..." },
+    "codex": { "position": "...", "confidence": 0.X, "key_contribution": "..." },
+    "gemini": { "position": "...", "confidence": 0.X, "key_contribution": "..." }
+  },
+  "best_advocate": { "majority": "...", "minority": "..." },
+  "analysis_notes": "..."
+}

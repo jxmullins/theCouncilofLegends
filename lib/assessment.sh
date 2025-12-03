@@ -910,54 +910,14 @@ build_questionnaire_prompt() {
         questionnaire=$(cat "$questionnaire_file")
     fi
 
-    # Build the prompt
-    cat <<'PROMPT_START'
-You are completing a self-assessment questionnaire. Be honest and accurate - these ratings will be peer-reviewed by other AI systems.
+    # Compact the questionnaire JSON
+    local compact_questionnaire
+    compact_questionnaire=$(echo "$questionnaire" | jq -c '.')
 
-IMPORTANT: You must respond with ONLY valid JSON. No markdown, no explanations, no code blocks - just the raw JSON object.
-
-Rate yourself 1-10 on each capability:
-- 1 = No capability
-- 3 = Basic awareness
-- 5 = Competent
-- 7 = Proficient
-- 10 = Expert
-
-Here is the questionnaire structure:
-PROMPT_START
-
-    echo "$questionnaire" | jq -c '.'
-
-    cat <<'PROMPT_END'
-
-Respond with a JSON object in this exact format:
-{
-  "categories": [
-    {
-      "category_id": "reasoning_logic",
-      "items": [
-        { "item_id": "formal_deduction", "rating": 8, "notes": "optional brief note" }
-      ]
-    },
-    {
-      "category_id": "programming_languages",
-      "subcategories": [
-        {
-          "subcategory_id": "legacy_classic",
-          "items": [
-            { "item_id": "c", "rating": 7 }
-          ]
-        }
-      ]
-    }
-  ],
-  "overall_self_rating": 7,
-  "strengths_summary": "Brief summary of top 3-5 strengths",
-  "weaknesses_summary": "Brief summary of 2-3 areas for improvement"
-}
-
-Complete the assessment for ALL categories and ALL items. Output ONLY the JSON, no other text.
-PROMPT_END
+    # Load template and substitute questionnaire
+    local template
+    template=$(load_template "assessment/self_assessment")
+    echo "${template//\{\{QUESTIONNAIRE\}\}/$compact_questionnaire}"
 }
 
 # Run the questionnaire for a single AI
@@ -1113,46 +1073,14 @@ build_peer_review_prompt() {
     local package
     package=$(cat "$package_file")
 
-    cat <<'PROMPT_START'
-You are reviewing anonymized self-assessments from other AI council members.
+    # Compact the package JSON
+    local compact_package
+    compact_package=$(echo "$package" | jq -c '.')
 
-IMPORTANT: You must respond with ONLY valid JSON. No markdown, no explanations, no code blocks.
-
-Review each assessment and provide your evaluation. Be fair but critical - look for:
-- Overclaiming (ratings that seem too high)
-- Underclaiming (false modesty)
-- Inconsistencies between ratings and stated strengths/weaknesses
-- Areas where you think their assessment is accurate
-
-Here are the assessments to review:
-PROMPT_START
-
-    echo "$package" | jq -c '.'
-
-    cat <<'PROMPT_END'
-
-For each anonymous AI (AI-A, AI-B, or AI-C in the package), provide:
-{
-  "reviews": [
-    {
-      "anonymous_id": "AI-A",
-      "overall_ranking": 7,
-      "category_rankings": [
-        { "category_id": "reasoning_logic", "ranking": 8, "reasoning": "Ratings seem accurate" },
-        { "category_id": "programming_languages", "ranking": 6, "reasoning": "May be overclaiming on some languages" }
-      ],
-      "strengths_observed": "Strong logical reasoning, honest about limitations",
-      "weaknesses_observed": "Some overclaiming in domain knowledge",
-      "chief_justice_suitability": {
-        "rating": 7,
-        "reasoning": "Good balance of skills, shows objectivity"
-      }
-    }
-  ]
-}
-
-Review ALL assessments in the package. Output ONLY the JSON.
-PROMPT_END
+    # Load template and substitute package
+    local template
+    template=$(load_template "assessment/peer_review")
+    echo "${template//\{\{PACKAGE\}\}/$compact_package}"
 }
 
 # Run peer review for a single AI

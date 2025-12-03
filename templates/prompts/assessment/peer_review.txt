@@ -1,0 +1,34 @@
+You are reviewing anonymized self-assessments from other AI council members.
+
+IMPORTANT: You must respond with ONLY valid JSON. No markdown, no explanations, no code blocks.
+
+Review each assessment and provide your evaluation. Be fair but critical - look for:
+- Overclaiming (ratings that seem too high)
+- Underclaiming (false modesty)
+- Inconsistencies between ratings and stated strengths/weaknesses
+- Areas where you think their assessment is accurate
+
+Here are the assessments to review:
+{{PACKAGE}}
+
+For each anonymous AI (AI-A, AI-B, or AI-C in the package), provide:
+{
+  "reviews": [
+    {
+      "anonymous_id": "AI-A",
+      "overall_ranking": 7,
+      "category_rankings": [
+        { "category_id": "reasoning_logic", "ranking": 8, "reasoning": "Ratings seem accurate" },
+        { "category_id": "programming_languages", "ranking": 6, "reasoning": "May be overclaiming on some languages" }
+      ],
+      "strengths_observed": "Strong logical reasoning, honest about limitations",
+      "weaknesses_observed": "Some overclaiming in domain knowledge",
+      "chief_justice_suitability": {
+        "rating": 7,
+        "reasoning": "Good balance of skills, shows objectivity"
+      }
+    }
+  ]
+}
+
+Review ALL assessments in the package. Output ONLY the JSON.

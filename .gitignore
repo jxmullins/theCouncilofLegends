@@ -23,3 +23,8 @@ tmp/
 
 # Team project outputs (local test/debug data)
 projects/
+
+# Log files
+logs/*.log
+logs/*.jsonl
+!logs/.gitkeep

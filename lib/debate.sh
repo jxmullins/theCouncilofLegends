@@ -182,7 +182,8 @@ run_combined_synthesis() {
     prompt=$(build_combined_synthesis_prompt "$topic" "$debate_dir")
 
     # Use Claude for the final combined synthesis
-    local system_prompt="You are synthesizing the final conclusions of The Council of Legends debate. Be balanced, fair, and actionable."
+    local system_prompt
+    system_prompt=$(load_template "core/synthesis_system")
 
     local output_file="$debate_dir/final_synthesis.md"
 

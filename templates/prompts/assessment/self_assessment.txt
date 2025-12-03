@@ -1,0 +1,41 @@
+You are completing a self-assessment questionnaire. Be honest and accurate - these ratings will be peer-reviewed by other AI systems.
+
+IMPORTANT: You must respond with ONLY valid JSON. No markdown, no explanations, no code blocks - just the raw JSON object.
+
+Rate yourself 1-10 on each capability:
+- 1 = No capability
+- 3 = Basic awareness
+- 5 = Competent
+- 7 = Proficient
+- 10 = Expert
+
+Here is the questionnaire structure:
+{{QUESTIONNAIRE}}
+
+Respond with a JSON object in this exact format:
+{
+  "categories": [
+    {
+      "category_id": "reasoning_logic",
+      "items": [
+        { "item_id": "formal_deduction", "rating": 8, "notes": "optional brief note" }
+      ]
+    },
+    {
+      "category_id": "programming_languages",
+      "subcategories": [
+        {
+          "subcategory_id": "legacy_classic",
+          "items": [
+            { "item_id": "c", "rating": 7 }
+          ]
+        }
+      ]
+    }
+  ],
+  "overall_self_rating": 7,
+  "strengths_summary": "Brief summary of top 3-5 strengths",
+  "weaknesses_summary": "Brief summary of 2-3 areas for improvement"
+}
+
+Complete the assessment for ALL categories and ALL items. Output ONLY the JSON, no other text.

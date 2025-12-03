@@ -25,25 +25,101 @@ export GROQ_COLOR='\033[0;33m'     # Orange/Yellow (4th AI Arbiter)
 # Logging Functions
 #=============================================================================
 
+# Log file configuration
+COUNCIL_LOG_DIR="${COUNCIL_LOG_DIR:-${COUNCIL_ROOT:-$(dirname "${BASH_SOURCE[0]}")/..}/logs}"
+COUNCIL_LOG_FILE="${COUNCIL_LOG_FILE:-}"
+COUNCIL_LOG_LEVEL="${COUNCIL_LOG_LEVEL:-INFO}"  # DEBUG, INFO, WARN, ERROR
+
+# Initialize logging - call this to enable file logging
+init_logging() {
+    local session_id="${1:-$(date +%Y%m%d_%H%M%S)}"
+
+    mkdir -p "$COUNCIL_LOG_DIR"
+    COUNCIL_LOG_FILE="$COUNCIL_LOG_DIR/council_${session_id}.log"
+
+    # Create/clear log file with header
+    {
+        echo "=============================================="
+        echo "Council of Legends - Session Log"
+        echo "Started: $(date -Iseconds)"
+        echo "Session: $session_id"
+        echo "=============================================="
+        echo ""
+    } > "$COUNCIL_LOG_FILE"
+
+    # Create symlink to latest log
+    ln -sf "$(basename "$COUNCIL_LOG_FILE")" "$COUNCIL_LOG_DIR/latest.log"
+
+    _log_to_file "INFO" "Logging initialized"
+}
+
+# Internal function to write to log file
+_log_to_file() {
+    local level="$1"
+    local message="$2"
+
+    if [[ -n "${COUNCIL_LOG_FILE:-}" ]] && [[ -w "${COUNCIL_LOG_FILE}" || -w "$(dirname "${COUNCIL_LOG_FILE}")" ]]; then
+        local timestamp
+        timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+        echo "[$timestamp] [$level] $message" >> "$COUNCIL_LOG_FILE"
+    fi
+}
+
+# Check if we should log at this level
+_should_log() {
+    local level="$1"
+    local levels=("DEBUG" "INFO" "WARN" "ERROR")
+    local current_idx=0
+    local level_idx=0
+
+    for i in "${!levels[@]}"; do
+        [[ "${levels[$i]}" == "$COUNCIL_LOG_LEVEL" ]] && current_idx=$i
+        [[ "${levels[$i]}" == "$level" ]] && level_idx=$i
+    done
+
+    [[ $level_idx -ge $current_idx ]]
+}
+
 log_info() {
     echo -e "${BLUE}[INFO]${NC} $1"
+    _log_to_file "INFO" "$1"
 }
 
 log_success() {
     echo -e "${GREEN}[PASS]${NC} $1"
+    _log_to_file "INFO" "[SUCCESS] $1"
 }
 
 log_error() {
     echo -e "${RED}[FAIL]${NC} $1" >&2
+    _log_to_file "ERROR" "$1"
 }
 
 log_warn() {
     echo -e "${YELLOW}[WARN]${NC} $1"
+    _log_to_file "WARN" "$1"
 }
 
 log_debug() {
-    if [[ "${VERBOSE:-false}" == "true" ]]; then
+    if [[ "${VERBOSE:-false}" == "true" ]] || _should_log "DEBUG"; then
         echo -e "${CYAN}[DEBUG]${NC} $1"
+    fi
+    # Always log debug to file if logging is enabled
+    _log_to_file "DEBUG" "$1"
+}
+
+# Log a structured event (JSON format for telemetry)
+log_event() {
+    local event_type="$1"
+    local event_data="${2:-{}}"
+
+    if [[ -n "${COUNCIL_LOG_FILE:-}" ]]; then
+        local timestamp
+        timestamp=$(date -Iseconds)
+        local json_line
+        json_line=$(jq -c --arg ts "$timestamp" --arg type "$event_type" \
+            '. + {timestamp: $ts, event: $type}' <<< "$event_data" 2>/dev/null || echo "{\"timestamp\":\"$timestamp\",\"event\":\"$event_type\",\"data\":\"$event_data\"}")
+        echo "$json_line" >> "${COUNCIL_LOG_FILE%.log}.events.jsonl"
     fi
 }
 
@@ -455,3 +531,75 @@ EOF
 
     log_debug "Transcript generated successfully"
 }
+
+#=============================================================================
+# Template Loading
+#=============================================================================
+
+# Load a prompt template from the templates directory
+# Usage: load_template "category/template_name" [VAR1=value1] [VAR2=value2]
+# Template variables use {{VAR_NAME}} syntax
+# Returns: The template content with variables substituted
+load_template() {
+    local template_path="$1"
+    shift
+
+    # Find the script directory (works even when sourced)
+    local script_dir
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+    local templates_dir="$script_dir/templates/prompts"
+
+    # Support both with and without .txt extension
+    local full_path="$templates_dir/$template_path"
+    if [[ ! -f "$full_path" ]] && [[ ! -f "${full_path}.txt" ]]; then
+        log_error "Template not found: $template_path"
+        log_debug "Looked in: $templates_dir"
+        return 1
+    fi
+
+    # Add .txt extension if needed
+    if [[ ! -f "$full_path" ]]; then
+        full_path="${full_path}.txt"
+    fi
+
+    # Read template content
+    local content
+    content=$(cat "$full_path")
+
+    # Substitute variables passed as arguments (VAR=value format)
+    for arg in "$@"; do
+        if [[ "$arg" =~ ^([A-Z_]+)=(.*)$ ]]; then
+            local var_name="${BASH_REMATCH[1]}"
+            local var_value="${BASH_REMATCH[2]}"
+            # Escape special characters in the replacement string
+            var_value=$(printf '%s' "$var_value" | sed 's/[&/\]/\\&/g')
+            content=$(echo "$content" | sed "s|{{${var_name}}}|${var_value}|g")
+        fi
+    done
+
+    echo "$content"
+}
+
+# Load template and substitute a single large block (for multi-line content)
+# Usage: load_template_with_content "category/template_name" "PLACEHOLDER" "$content"
+load_template_with_content() {
+    local template_path="$1"
+    local placeholder="$2"
+    local replacement="$3"
+
+    local template
+    template=$(load_template "$template_path") || return 1
+
+    # For multi-line content, we use awk instead of sed
+    echo "$template" | awk -v placeholder="{{${placeholder}}}" -v replacement="$replacement" '
+    {
+        idx = index($0, placeholder)
+        if (idx > 0) {
+            print substr($0, 1, idx-1) replacement substr($0, idx+length(placeholder))
+        } else {
+            print
+        }
+    }'
+}
+
+log_debug "Utils loaded (with template support)"
