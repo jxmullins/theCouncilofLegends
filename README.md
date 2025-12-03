@@ -67,11 +67,12 @@ A multi-AI debate and collaboration system that orchestrates structured discussi
 
 | Feature | Description |
 |---------|-------------|
-| **Three AI Participants** | Claude (Anthropic), Codex (OpenAI), Gemini (Google) |
+| **Three AI Debaters** | Claude (Anthropic), Codex (OpenAI), Gemini (Google) |
+| **4th AI Arbiter** | Groq/Llama serves as impartial judge for Chief Justice selection and scoring |
 | **Debate Modes** | Collaborative, Adversarial, Exploratory, SCOTUS (judicial) |
 | **Team Collaboration** | AIs work together on tasks with a PM coordinating |
 | **Persona System** | Assign personalities (philosopher, hacker, scientist, etc.) |
-| **Chief Justice Selection** | Arbiter selects moderator based on topic expertise |
+| **Chief Justice Selection** | Arbiter analyzes topic and selects best-suited moderator |
 | **Context Management** | Smart summarization for long debates |
 | **Full Transcripts** | Every debate saved as markdown |
 
@@ -97,9 +98,12 @@ npm install -g @anthropic/gemini-cli
 gemini auth login
 ```
 
-### Optional: Groq API Key
+### Optional: 4th AI Arbiter (Groq)
 
-For Chief Justice selection and SCOTUS mode:
+The arbiter is an impartial 4th AI (Groq/Llama) that doesn't participate in debates but:
+- Analyzes topics to select the best Chief Justice
+- Provides baseline capability scoring
+- Enables SCOTUS judicial mode
 
 ```bash
 export GROQ_API_KEY="your-groq-api-key"
