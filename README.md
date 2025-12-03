@@ -6,7 +6,8 @@ A multi-AI debate and collaboration system that orchestrates structured discussi
 
 [![Status: Work In Progress](https://img.shields.io/badge/Status-Work%20In%20Progress-yellow)](TODO.md)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Bash](https://img.shields.io/badge/Built%20with-Bash-blue)](https://www.gnu.org/software/bash/)
+[![Built with Claude Code](https://img.shields.io/badge/Built%20with-Claude%20Code-blueviolet?logo=anthropic)](https://claude.com/claude-code)
+[![Bash](https://img.shields.io/badge/Shell-Bash-blue?logo=gnu-bash)](https://www.gnu.org/software/bash/)
 
 > **Note:** This project is under active development. Core functionality works, but some features are still being built. See the [Roadmap](#roadmap) for current status.
 
@@ -17,6 +18,22 @@ A multi-AI debate and collaboration system that orchestrates structured discussi
 **Old way:** Ask one AI, get one perspective, wonder if you're missing something.
 
 **Council way:** Three AIs debate the topic, challenge each other's reasoning, then synthesize their conclusions. You get a richer, more nuanced answer.
+
+---
+
+## Two Modes: Council vs Team
+
+| | **Council Mode** (`council.sh`) | **Team Mode** (`team.sh`) |
+|---|---|---|
+| **Purpose** | Debate and explore ideas | Build and deliver artifacts |
+| **Structure** | Rounds of arguments and rebuttals | Task breakdown with milestones |
+| **Output** | Synthesis of perspectives | Working code, docs, or designs |
+| **Leadership** | Chief Justice moderates | Project Manager coordinates |
+| **Best for** | "Should we...", "What's the best...", "Pros/cons of..." | "Build a...", "Create a...", "Implement..." |
+
+**Use Council when** you want multiple perspectives on a decision, need to explore tradeoffs, or want to stress-test an idea.
+
+**Use Team when** you want the AIs to collaborate on producing something tangible—code, documentation, architecture designs, etc.
 
 ---
 
