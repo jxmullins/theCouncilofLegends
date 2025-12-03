@@ -3,6 +3,13 @@ tmp/
 *.tmp
 *.err
 
+# Environment and secrets
+.env
+.env.*
+*.pem
+*.key
+!*.key.example
+
 # OS files
 .DS_Store
 

@@ -179,6 +179,7 @@ $response_content
 build_opening_prompt() {
     local topic="$1"
     local mode="${2:-collaborative}"
+    local max_words="${MAX_RESPONSE_WORDS:-400}"
 
     cat <<EOF
 # The Council of Legends - Opening Statement
@@ -199,7 +200,7 @@ Present your opening position on this topic. Structure your response as follows:
 Guidelines:
 - Be clear and direct in your position
 - Support arguments with reasoning, not just assertions
-- Keep your response focused (300-400 words maximum)
+- Keep your response focused (approximately ${max_words} words maximum)
 - Remember: other AIs will respond to your arguments
 EOF
 }
@@ -214,6 +215,8 @@ build_rebuttal_prompt() {
     local round="$3"
     local current_ai="$4"
     local debate_dir="$5"
+    local max_words="${MAX_RESPONSE_WORDS:-400}"
+    local include_full="${INCLUDE_FULL_HISTORY:-false}"
 
     local prev_round=$((round - 1))
 
@@ -226,10 +229,30 @@ $topic
 ## Previous Debate Context
 EOF
 
-    # Use get_previous_context for smart context management
-    local context
-    context=$(get_previous_context "$debate_dir" "$round" "$current_ai")
-    echo "$context"
+    # Use full history if configured, otherwise smart context management
+    if [[ "$include_full" == "true" ]]; then
+        # Include all previous rounds in full
+        for ((r=1; r<round; r++)); do
+            for ai in claude codex gemini; do
+                local response_file="$debate_dir/responses/round_${r}_${ai}.md"
+                if [[ -f "$response_file" ]]; then
+                    local ai_name
+                    ai_name=$(get_ai_name "$ai")
+                    cat <<EOF
+
+### ${ai_name}'s Position (Round $r):
+$(cat "$response_file")
+
+EOF
+                fi
+            done
+        done
+    else
+        # Use get_previous_context for smart context management
+        local context
+        context=$(get_previous_context "$debate_dir" "$round" "$current_ai")
+        echo "$context"
+    fi
 
     # Include own previous response
     local own_response="$debate_dir/responses/round_${prev_round}_${current_ai}.md"
@@ -256,7 +279,7 @@ Guidelines:
 - Engage substantively with specific arguments made by others
 - Be constructive, not dismissive
 - Acknowledge strong points even when you disagree
-- Keep your response focused (300-400 words maximum)
+- Keep your response focused (approximately ${max_words} words maximum)
 EOF
 }
 
@@ -269,6 +292,9 @@ build_synthesis_prompt() {
     local mode="$2"
     local debate_dir="$3"
     local current_ai="$4"
+    local max_chars="${MAX_CONTEXT_CHARS:-8000}"
+    local total_chars=0
+    local content=""
 
     cat <<EOF
 # The Council of Legends - Final Synthesis
@@ -279,30 +305,74 @@ $topic
 ## Full Debate Summary
 EOF
 
-    # Include all responses from all rounds
-    local found_responses=false
+    # Collect round files and sort them numerically (fixes Issue #9)
+    local round_files=()
     for round_file in "$debate_dir"/responses/round_*.md; do
         if [[ -f "$round_file" ]]; then
-            found_responses=true
-            local basename
-            basename=$(basename "$round_file" .md)
-            local round ai
-            round=$(echo "$basename" | sed 's/round_//' | cut -d'_' -f1)
-            ai=$(echo "$basename" | sed 's/round_[0-9]*_//')
-            local ai_name
-            ai_name=$(get_ai_name "$ai")
+            round_files+=("$round_file")
+        fi
+    done
 
-            cat <<EOF
+    # Sort by round number (numeric extraction)
+    IFS=$'\n' sorted_files=($(printf '%s\n' "${round_files[@]}" | \
+        sed 's|.*/round_\([0-9]*\)_\(.*\)\.md|\1 &|' | \
+        sort -n | \
+        cut -d' ' -f2-))
+    unset IFS
+
+    # Include responses respecting MAX_CONTEXT_CHARS (fixes Issue #8)
+    local found_responses=false
+    for round_file in "${sorted_files[@]}"; do
+        found_responses=true
+        local basename
+        basename=$(basename "$round_file" .md)
+        local round ai
+        round=$(echo "$basename" | sed 's/round_//' | cut -d'_' -f1)
+        ai=$(echo "$basename" | sed 's/round_[0-9]*_//')
+        local ai_name
+        ai_name=$(get_ai_name "$ai")
+
+        local file_content
+        file_content=$(cat "$round_file")
+        local file_chars=${#file_content}
+
+        # Check if we're approaching context limit
+        if [[ $((total_chars + file_chars)) -gt $max_chars ]]; then
+            # Use summary if available
+            local summary_file="$debate_dir/context/round_${round}_summary.md"
+            if [[ -f "$summary_file" ]]; then
+                file_content=$(cat "$summary_file")
+                file_chars=${#file_content}
+                log_debug "Using summary for round $round (context limit)"
+            else
+                # Truncate content if no summary available
+                local remaining=$((max_chars - total_chars - 200))
+                if [[ $remaining -gt 100 ]]; then
+                    file_content="${file_content:0:$remaining}... [truncated due to context limit]"
+                    file_chars=${#file_content}
+                else
+                    log_warn "Skipping round $round content (context limit exceeded)"
+                    continue
+                fi
+            fi
+        fi
+
+        total_chars=$((total_chars + file_chars))
+
+        cat <<EOF
 
 ### Round $round - ${ai_name}:
-$(cat "$round_file")
+$file_content
 
 EOF
-        fi
     done
 
     if [[ "$found_responses" == "false" ]]; then
         echo "No previous responses found."
+    fi
+
+    if [[ $total_chars -gt $max_chars ]]; then
+        log_warn "Synthesis context ($total_chars chars) exceeded MAX_CONTEXT_CHARS ($max_chars)"
     fi
 
     cat <<EOF

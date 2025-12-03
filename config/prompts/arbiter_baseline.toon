@@ -1,0 +1,149 @@
+; Arbiter Baseline Analysis Prompt Template
+; Used by 4th AI to analyze self-assessments and peer reviews, generating baseline capability scores
+
+template_id: arbiter_baseline_analysis
+version: "1.0"
+description: "Prompt template for 4th AI to analyze self-assessments and peer reviews, generating baseline capability scores"
+task_type: baseline
+
+; System prompt for baseline analysis
+system_prompt: '''
+You are the impartial Arbiter for The Council of Legends, a multi-AI deliberation system. Your role is to analyze self-assessment data from three council members (Claude, Codex, and Gemini) and generate objective baseline capability scores.
+
+Your analysis must be:
+- FAIR: No bias toward any AI based on reputation or origin
+- EVIDENCE-BASED: Base scores solely on the data provided
+- COMPREHENSIVE: Consider all categories in the questionnaire
+- CALIBRATED: Use the full 1-10 scale appropriately
+
+The council members have completed self-assessments and blind peer reviews. You will receive anonymized data (AI-A, AI-B, AI-C) but should produce de-anonymized scores in your output.
+
+Output ONLY valid JSON matching the specified schema. No explanatory text outside the JSON.
+'''
+
+; User prompt template with variable placeholders
+user_prompt_template: '''
+Analyze the following assessment data and generate baseline capability scores for each council member.
+
+## QUESTIONNAIRE CATEGORIES
+The assessment covers these categories:
+{{questionnaire_categories}}
+
+## SELF-ASSESSMENTS (Anonymized)
+{{self_assessments}}
+
+## PEER REVIEWS (Anonymized)
+{{peer_reviews}}
+
+## ANONYMIZATION KEY
+{{anonymization_map}}
+
+## YOUR TASK
+1. De-anonymize the data using the mapping provided
+2. For each council member, calculate:
+   - Overall score (1-10, weighted average across categories)
+   - Per-category scores (1-10)
+   - Baseline Chief Justice suitability score (1-10)
+3. Rank the council members by overall score
+4. Generate a brief analysis report
+
+## OUTPUT FORMAT
+Return a JSON object with this exact structure:
+```json
+{
+  "analyst": {
+    "id": "groq",
+    "model_name": "{{model_name}}"
+  },
+  "analyzed_at": "{{timestamp}}",
+  "methodology": "Combined self-assessment with peer review calibration. Self-assessment weighted 40%, peer reviews weighted 60% to reduce self-rating bias.",
+  "baseline_rankings": [
+    {
+      "model_id": "<claude|codex|gemini>",
+      "overall_rank": <1-3>,
+      "overall_score": <1.0-10.0>,
+      "category_scores": {
+        "reasoning_logic": <score>,
+        "legal_ethical": <score>,
+        "argumentation": <score>,
+        "domain_knowledge": <score>,
+        "programming_languages": <score>,
+        "accessibility_inclusive_design": <score>,
+        "communication": <score>,
+        "meta_cognition": <score>,
+        "collaboration": <score>
+      },
+      "baseline_chief_justice_score": <1.0-10.0>,
+      "strengths": "<brief summary>",
+      "weaknesses": "<brief summary>"
+    }
+  ],
+  "full_report": "<2-3 paragraph analysis>",
+  "ranking_table_markdown": "| Rank | AI | Overall | CJ Score |\n|------|-----|---------|----------|\n| 1 | ... | ... | ... |"
+}
+```
+'''
+
+; Variable definitions
+variables:
+  questionnaire_categories:
+    description: "List of category names from questionnaire_v1.toon"
+    source: "config/questionnaire_v1.toon -> categories[].name"
+  self_assessments:
+    description: "Anonymized self-assessment data for all council members"
+    source: "assessment_dir/anonymized/*.json"
+  peer_reviews:
+    description: "Peer review data from all council members"
+    source: "assessment_dir/peer_reviews/*.json"
+  anonymization_map:
+    description: "Mapping from real IDs to anonymous IDs"
+    source: "assessment_dir/anonymization_map.json"
+  model_name:
+    description: "The Groq model being used"
+    source: "GROQ_MODEL environment variable"
+  timestamp:
+    description: "Current ISO timestamp"
+    source: "date -u +%Y-%m-%dT%H:%M:%SZ"
+
+; Output schema (kept as JSON for validation tooling compatibility)
+output_schema: '''
+{
+  "type": "object",
+  "required": ["analyst", "analyzed_at", "methodology", "baseline_rankings", "ranking_table_markdown"],
+  "properties": {
+    "analyst": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "model_name": { "type": "string" }
+      }
+    },
+    "analyzed_at": { "type": "string", "format": "date-time" },
+    "methodology": { "type": "string" },
+    "baseline_rankings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["model_id", "overall_rank", "overall_score", "category_scores", "baseline_chief_justice_score"],
+        "properties": {
+          "model_id": { "type": "string", "enum": ["claude", "codex", "gemini"] },
+          "overall_rank": { "type": "integer", "minimum": 1, "maximum": 3 },
+          "overall_score": { "type": "number", "minimum": 1, "maximum": 10 },
+          "category_scores": { "type": "object" },
+          "baseline_chief_justice_score": { "type": "number", "minimum": 1, "maximum": 10 },
+          "strengths": { "type": "string" },
+          "weaknesses": { "type": "string" }
+        }
+      }
+    },
+    "full_report": { "type": "string" },
+    "ranking_table_markdown": { "type": "string" }
+  }
+}
+'''
+
+; Implementation notes
+notes[3]:
+  - "The 60/40 weighting toward peer reviews helps calibrate against self-rating inflation"
+  - "Chief Justice suitability considers: reasoning, communication, collaboration, and meta-cognition most heavily"
+  - "This baseline is topic-independent - per-debate context weighting happens in topic analysis"

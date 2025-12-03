@@ -83,6 +83,10 @@ ${BOLD}OPTIONS${NC}
                      Example: --personas claude:philosopher,codex:hacker
                      Only specified AIs are changed; others use default
 
+    --dynamic-personas  Enable dynamic persona switching between rounds
+                        Arbiter suggests persona changes based on debate needs
+                        Requires GROQ_API_KEY for arbiter
+
     --list-personas  Show all available personas and exit
 
     --help           Show this help message
@@ -207,10 +211,18 @@ parse_args() {
                 exit 0
                 ;;
             --mode)
+                if [[ -z "${2:-}" ]] || [[ "$2" == -* ]]; then
+                    log_error "Option --mode requires a value"
+                    exit 1
+                fi
                 MODE="$2"
                 shift 2
                 ;;
             --rounds)
+                if [[ -z "${2:-}" ]] || [[ "$2" == -* ]]; then
+                    log_error "Option --rounds requires a value"
+                    exit 1
+                fi
                 ROUNDS="$2"
                 shift 2
                 ;;
@@ -219,10 +231,18 @@ parse_args() {
                 shift
                 ;;
             --config)
+                if [[ -z "${2:-}" ]] || [[ "$2" == -* ]]; then
+                    log_error "Option --config requires a value"
+                    exit 1
+                fi
                 CONFIG_FILE="$2"
                 shift 2
                 ;;
             --chief-justice|--cj)
+                if [[ -z "${2:-}" ]] || [[ "$2" == -* ]]; then
+                    log_error "Option --chief-justice requires a value"
+                    exit 1
+                fi
                 CHIEF_JUSTICE="$2"
                 shift 2
                 ;;
@@ -231,8 +251,16 @@ parse_args() {
                 shift
                 ;;
             --personas)
+                if [[ -z "${2:-}" ]] || [[ "$2" == -* ]]; then
+                    log_error "Option --personas requires a value"
+                    exit 1
+                fi
                 PERSONAS_SPEC="$2"
                 shift 2
+                ;;
+            --dynamic-personas)
+                enable_dynamic_personas
+                shift
                 ;;
             -*)
                 log_error "Unknown option: $1"
@@ -296,15 +324,33 @@ parse_args() {
 #=============================================================================
 
 main() {
-    # Parse arguments
-    parse_args "$@"
+    # Pre-parse for --config flag (needs to happen before full parse)
+    local config_file_arg=""
+    for arg in "$@"; do
+        if [[ "$arg" == "--config" ]]; then
+            shift_next=true
+            continue
+        fi
+        if [[ "${shift_next:-}" == "true" ]]; then
+            config_file_arg="$arg"
+            break
+        fi
+    done
 
-    # Load configuration
-    if [[ -n "$CONFIG_FILE" ]]; then
-        load_config "$CONFIG_FILE"
+    # Validate system dependencies before anything else
+    if ! validate_system_dependencies; then
+        exit 1
+    fi
+
+    # Load configuration FIRST (so CLI args can override)
+    if [[ -n "$config_file_arg" ]]; then
+        load_config "$config_file_arg"
     else
         load_config
     fi
+
+    # Parse arguments (CLI args will override config values)
+    parse_args "$@"
 
     # Parse persona specifications if provided
     if [[ -n "$PERSONAS_SPEC" ]]; then
@@ -367,8 +413,8 @@ main() {
             log_info "Using baseline from: $latest_dir"
             local cj_output_dir="$COUNCIL_ROOT/cj_selections/$(date +%Y%m%d_%H%M%S)"
 
-            # Run CJ selection (quiet mode - results already displayed by function)
-            selected_cj=$(select_chief_justice "$TOPIC" "$baseline_file" "$cj_output_dir" 2>/dev/null) || true
+            # Run CJ selection (logs go to stderr, result to stdout)
+            selected_cj=$(select_chief_justice "$TOPIC" "$baseline_file" "$cj_output_dir") || true
 
             if [[ -n "$selected_cj" ]]; then
                 log_success "Chief Justice selected: $(get_ai_name "$selected_cj")"

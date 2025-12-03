@@ -13,6 +13,7 @@ invoke_claude() {
 
     # Build command arguments
     local cmd_args=("-p")
+    local use_stdin=false
 
     # Add system prompt if provided
     if [[ -n "$system_prompt" ]]; then
@@ -24,8 +25,17 @@ invoke_claude() {
         cmd_args+=("--model" "$CLAUDE_MODEL")
     fi
 
-    # Add the prompt
-    cmd_args+=("$prompt")
+    # Add additional directories if specified (allows access to external paths)
+    # Note: --add-dir consumes all remaining positional args, so prompt must go via stdin
+    if [[ -n "${TEAM_ADD_DIRS:-}" ]]; then
+        for dir in $TEAM_ADD_DIRS; do
+            cmd_args+=("--add-dir" "$dir")
+        done
+        use_stdin=true
+    else
+        # Add the prompt as positional arg (original behavior)
+        cmd_args+=("$prompt")
+    fi
 
     # Handle placeholder ANTHROPIC_API_KEY
     local env_cmd=""
@@ -36,10 +46,23 @@ invoke_claude() {
 
     # Execute with timeout
     local exit_code=0
-    if [[ -n "$env_cmd" ]]; then
-        run_with_timeout "${TURN_TIMEOUT:-120}" $env_cmd claude "${cmd_args[@]}" > "$output_file" 2>"$error_file" || exit_code=$?
+    if [[ "$use_stdin" == "true" ]]; then
+        # Pass prompt via temp file when --add-dir is used (it consumes remaining positional args)
+        # Using temp file instead of pipe to work with timeout's background process
+        local prompt_file="${output_file}.prompt"
+        printf '%s' "$prompt" > "$prompt_file"
+        if [[ -n "$env_cmd" ]]; then
+            run_with_timeout "${TURN_TIMEOUT:-120}" $env_cmd claude "${cmd_args[@]}" < "$prompt_file" > "$output_file" 2>"$error_file" || exit_code=$?
+        else
+            run_with_timeout "${TURN_TIMEOUT:-120}" claude "${cmd_args[@]}" < "$prompt_file" > "$output_file" 2>"$error_file" || exit_code=$?
+        fi
+        rm -f "$prompt_file"
     else
-        run_with_timeout "${TURN_TIMEOUT:-120}" claude "${cmd_args[@]}" > "$output_file" 2>"$error_file" || exit_code=$?
+        if [[ -n "$env_cmd" ]]; then
+            run_with_timeout "${TURN_TIMEOUT:-120}" $env_cmd claude "${cmd_args[@]}" > "$output_file" 2>"$error_file" || exit_code=$?
+        else
+            run_with_timeout "${TURN_TIMEOUT:-120}" claude "${cmd_args[@]}" > "$output_file" 2>"$error_file" || exit_code=$?
+        fi
     fi
 
     # Handle results
@@ -60,6 +83,9 @@ invoke_claude() {
         log_error "Claude returned empty response"
         return 1
     fi
+
+    # Normalize output for consistency
+    normalize_output_file "$output_file"
 
     # Clean up error file on success
     rm -f "$error_file"

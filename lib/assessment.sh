@@ -25,6 +25,292 @@ declare -a COUNCIL_MEMBERS=("claude" "codex" "gemini")
 declare -a TEAM_MEMBERS=("claude" "codex" "gemini")
 declare -a TEAM_MEMBERS_WITH_ARBITER=("claude" "codex" "gemini" "arbiter")
 
+# Persistent baselines directory
+BASELINES_DIR="${COUNCIL_ROOT:-$SCRIPT_DIR/..}/config/baselines"
+
+#=============================================================================
+# Persistent Baseline Storage
+#=============================================================================
+
+# Store baseline analysis persistently with timestamp
+# Args: $1 = baseline JSON file path
+# Returns: path to stored baseline file
+store_persistent_baseline() {
+    local baseline_file="$1"
+
+    if [[ ! -f "$baseline_file" ]]; then
+        log_error "Baseline file not found: $baseline_file"
+        return 1
+    fi
+
+    # Ensure baselines directory exists
+    ensure_dir "$BASELINES_DIR"
+
+    # Generate timestamped filename
+    local timestamp
+    timestamp=$(date '+%Y%m%d_%H%M%S')
+    local stored_file="$BASELINES_DIR/baseline_${timestamp}.json"
+
+    # Add model fingerprints to the baseline before storing
+    local fingerprints
+    fingerprints=$(get_current_model_fingerprints)
+
+    # Merge fingerprints into the baseline JSON
+    jq --argjson fingerprints "$fingerprints" \
+        '. + {model_fingerprints: $fingerprints}' \
+        "$baseline_file" > "$stored_file"
+
+    # Update latest symlink
+    local latest_link="$BASELINES_DIR/latest.json"
+    rm -f "$latest_link"
+    ln -s "baseline_${timestamp}.json" "$latest_link"
+
+    log_info "Baseline stored persistently: $stored_file"
+    echo "$stored_file"
+}
+
+# Get the latest persistent baseline
+# Returns: path to latest baseline file, or empty if none exists
+get_latest_baseline() {
+    local latest_link="$BASELINES_DIR/latest.json"
+
+    if [[ -L "$latest_link" ]] && [[ -f "$latest_link" ]]; then
+        # Resolve the symlink to absolute path
+        echo "$BASELINES_DIR/$(readlink "$latest_link")"
+    elif [[ -f "$latest_link" ]]; then
+        # Direct file (not a symlink)
+        echo "$latest_link"
+    else
+        # No baseline exists, find most recent by timestamp
+        local latest
+        latest=$(ls -t "$BASELINES_DIR"/baseline_*.json 2>/dev/null | head -1)
+        if [[ -n "$latest" ]]; then
+            echo "$latest"
+        else
+            echo ""
+        fi
+    fi
+}
+
+# List all persistent baselines
+# Args: $1 = limit (optional, default 10)
+list_persistent_baselines() {
+    local limit="${1:-10}"
+
+    if [[ ! -d "$BASELINES_DIR" ]]; then
+        log_warn "No baselines directory found"
+        return 1
+    fi
+
+    local files
+    files=$(ls -t "$BASELINES_DIR"/baseline_*.json 2>/dev/null | head -"$limit")
+
+    if [[ -z "$files" ]]; then
+        log_info "No persistent baselines found"
+        return 0
+    fi
+
+    echo -e "${YELLOW}Persistent Baselines:${NC}"
+    local count=1
+    while IFS= read -r file; do
+        local basename
+        basename=$(basename "$file")
+        # Extract timestamp from filename
+        local ts="${basename#baseline_}"
+        ts="${ts%.json}"
+        local formatted_ts="${ts:0:4}-${ts:4:2}-${ts:6:2} ${ts:9:2}:${ts:11:2}:${ts:13:2}"
+        echo "  $count. $formatted_ts ($basename)"
+        ((count++))
+    done <<< "$files"
+}
+
+#=============================================================================
+# Model Fingerprinting & Change Detection
+#=============================================================================
+
+# Get current model fingerprints for all council members
+# Returns: JSON object with model fingerprints
+get_current_model_fingerprints() {
+    local claude_model="${CLAUDE_MODEL:-sonnet}"
+    local codex_model="${CODEX_MODEL:-o3}"
+    local gemini_model="${GEMINI_MODEL:-gemini-2.5-flash}"
+    local groq_model="${GROQ_MODEL:-llama-3.3-70b-versatile}"
+
+    jq -n \
+        --arg claude "$claude_model" \
+        --arg codex "$codex_model" \
+        --arg gemini "$gemini_model" \
+        --arg groq "$groq_model" \
+        '{
+            fingerprint_version: "1.0",
+            models: {
+                claude: $claude,
+                codex: $codex,
+                gemini: $gemini,
+                groq: $groq
+            }
+        }'
+}
+
+# Check if current models differ from stored baseline
+# Args: $1 = baseline file (optional, defaults to latest)
+# Returns: 0 if models match, 1 if changed
+# Outputs: JSON describing changes
+check_model_changes() {
+    local baseline_file="${1:-}"
+
+    if [[ -z "$baseline_file" ]]; then
+        baseline_file=$(get_latest_baseline)
+    fi
+
+    if [[ -z "$baseline_file" ]] || [[ ! -f "$baseline_file" ]]; then
+        log_debug "No baseline found for model comparison"
+        echo '{"has_baseline": false, "changes": []}'
+        return 1
+    fi
+
+    # Get current fingerprints
+    local current
+    current=$(get_current_model_fingerprints)
+
+    # Get stored fingerprints from baseline
+    local stored
+    stored=$(jq -r '.model_fingerprints // empty' "$baseline_file")
+
+    if [[ -z "$stored" ]]; then
+        log_debug "Baseline has no model fingerprints (older format)"
+        echo '{"has_baseline": true, "legacy_baseline": true, "changes": []}'
+        return 1
+    fi
+
+    # Compare each model
+    local changes=()
+    local has_changes=false
+
+    for ai in claude codex gemini groq; do
+        local current_model stored_model
+        current_model=$(echo "$current" | jq -r ".models.$ai")
+        stored_model=$(echo "$stored" | jq -r ".models.$ai // empty")
+
+        if [[ -n "$stored_model" ]] && [[ "$current_model" != "$stored_model" ]]; then
+            has_changes=true
+            changes+=("{\"ai\": \"$ai\", \"was\": \"$stored_model\", \"now\": \"$current_model\"}")
+        fi
+    done
+
+    # Build result JSON
+    local changes_json="[]"
+    if [[ ${#changes[@]} -gt 0 ]]; then
+        changes_json=$(printf '%s\n' "${changes[@]}" | jq -s '.')
+    fi
+
+    local baseline_date
+    baseline_date=$(jq -r '.analyzed_at // .created_at // "unknown"' "$baseline_file")
+
+    jq -n \
+        --arg baseline "$baseline_file" \
+        --arg date "$baseline_date" \
+        --argjson changes "$changes_json" \
+        --argjson has_changes "$has_changes" \
+        '{
+            has_baseline: true,
+            baseline_file: $baseline,
+            baseline_date: $date,
+            has_changes: $has_changes,
+            changes: $changes
+        }'
+
+    if [[ "$has_changes" == "true" ]]; then
+        return 1
+    fi
+    return 0
+}
+
+# Display model change warning and prompt for re-evaluation
+# Args: $1 = changes JSON from check_model_changes
+# Returns: 0 if user wants to re-evaluate, 1 otherwise
+prompt_model_change_warning() {
+    local changes_json="$1"
+
+    local has_changes
+    has_changes=$(echo "$changes_json" | jq -r '.has_changes')
+
+    if [[ "$has_changes" != "true" ]]; then
+        return 1
+    fi
+
+    echo ""
+    echo -e "${YELLOW}⚠ Model Configuration Changed${NC}"
+    echo -e "${DIM}The following AI models differ from the last baseline assessment:${NC}"
+    echo ""
+
+    echo "$changes_json" | jq -r '.changes[] | "  • \(.ai): \(.was) → \(.now)"'
+
+    local baseline_date
+    baseline_date=$(echo "$changes_json" | jq -r '.baseline_date')
+    echo ""
+    echo -e "${DIM}Last baseline: $baseline_date${NC}"
+    echo ""
+
+    echo -e "${CYAN}Model changes may affect capability scores.${NC}"
+    echo -e "It's recommended to re-run the questionnaire assessment."
+    echo ""
+
+    # Check if we're in interactive mode
+    if [[ -t 0 ]]; then
+        read -p "Re-run assessment now? [y/N] " -n 1 -r
+        echo ""
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            return 0
+        fi
+    else
+        echo -e "${DIM}Run 'assess.sh --questionnaire' to update the baseline.${NC}"
+    fi
+
+    return 1
+}
+
+# Wrapper to check models and warn if changed
+# Call this before CJ selection or debates
+# Args: $1 = quiet mode (skip prompt if "quiet")
+# Returns: 0 if no changes or user declined, 1 if user wants re-eval
+should_trigger_reassessment() {
+    local quiet_mode="${1:-}"
+
+    local changes_json
+    if changes_json=$(check_model_changes); then
+        # No changes
+        return 0
+    fi
+
+    local has_baseline
+    has_baseline=$(echo "$changes_json" | jq -r '.has_baseline')
+
+    if [[ "$has_baseline" != "true" ]]; then
+        # No baseline to compare - not a change scenario
+        return 0
+    fi
+
+    local legacy_baseline
+    legacy_baseline=$(echo "$changes_json" | jq -r '.legacy_baseline // false')
+
+    if [[ "$legacy_baseline" == "true" ]]; then
+        log_info "Baseline predates model fingerprinting - consider running new assessment"
+        return 0
+    fi
+
+    if [[ "$quiet_mode" == "quiet" ]]; then
+        log_warn "Model configuration has changed since last assessment"
+        return 0
+    fi
+
+    if prompt_model_change_warning "$changes_json"; then
+        return 1  # User wants to re-evaluate
+    fi
+
+    return 0
+}
+
 #=============================================================================
 # Anonymization Functions
 #=============================================================================
@@ -1234,6 +1520,9 @@ run_baseline_analysis() {
     # Update status
     update_assessment_status "$assessment_dir" "analysis_complete"
 
+    # Store baseline persistently for future topic weighting
+    store_persistent_baseline "$output_file" >/dev/null
+
     log_success "Baseline analysis complete"
 
     # Display ranking table if available
@@ -1378,13 +1667,50 @@ build_cj_recommendation_prompt() {
     local baseline_file="$3"
     local debate_id="$4"
 
-    # Extract compact topic relevance
+    # Extract compact topic relevance (category level)
     local topic_relevance
     topic_relevance=$(jq -c '.category_relevance | map({(.category_id): .relevance}) | add' "$topic_file")
+
+    # Extract item-level relevance if available (for fine-grained scoring)
+    local item_relevance
+    item_relevance=$(jq -c '
+        [.category_relevance[]
+         | select(.item_relevance != null and (.item_relevance | length) > 0)
+         | {category: .category_id, items: (.item_relevance | map({(.item_id): .relevance}) | add)}
+        ] | if length > 0 then . else null end
+    ' "$topic_file")
+
+    # Extract subcategory-level relevance if available
+    local subcategory_relevance
+    subcategory_relevance=$(jq -c '
+        [.category_relevance[]
+         | select(.subcategory_relevance != null and (.subcategory_relevance | length) > 0)
+         | {category: .category_id, subcategories: (.subcategory_relevance | map({(.subcategory_id): .relevance}) | add)}
+        ] | if length > 0 then . else null end
+    ' "$topic_file")
 
     # Extract compact baseline scores
     local baseline_scores
     baseline_scores=$(jq -c '[.baseline_rankings[] | {id: .id, overall: .overall_score, cj: .baseline_chief_justice_score, categories: .category_scores}]' "$baseline_file")
+
+    # Build the prompt with item-level weights when available
+    local item_section=""
+    if [[ "$item_relevance" != "null" ]]; then
+        item_section="
+ITEM-LEVEL RELEVANCE (for fine-grained scoring):
+$item_relevance
+
+NOTE: When item-level weights are provided, use them to refine category scores.
+For example, if 'programming_languages' has category relevance 0.8 but item 'python' has 1.0,
+weight the AI's Python score higher than other programming language scores."
+    fi
+
+    local subcategory_section=""
+    if [[ "$subcategory_relevance" != "null" ]]; then
+        subcategory_section="
+SUBCATEGORY RELEVANCE:
+$subcategory_relevance"
+    fi
 
     cat <<EOF
 Recommend Chief Justice for this debate based on topic relevance.
@@ -1394,15 +1720,18 @@ DEBATE_ID: $debate_id
 
 TOPIC RELEVANCE (0.0-1.0 per category):
 $topic_relevance
+$subcategory_section
+$item_section
 
 BASELINE SCORES:
 $baseline_scores
 
 Calculate context-weighted scores:
 1. For each AI, multiply their category scores by relevance weights
-2. CJ role weights meta_cognition, communication, collaboration 1.5x extra
-3. Rank by context-weighted CJ suitability
-4. Show delta from baseline (positive = topic favors this AI)
+2. If item-level weights are provided, use them for more precise scoring within categories
+3. CJ role weights meta_cognition, communication, collaboration 1.5x extra
+4. Rank by context-weighted CJ suitability
+5. Show delta from baseline (positive = topic favors this AI)
 
 Output ONLY valid JSON:
 {
@@ -1515,6 +1844,13 @@ select_chief_justice() {
 
     ensure_dir "$output_dir"
 
+    # Check for model changes since last baseline
+    if ! should_trigger_reassessment; then
+        # User wants to re-evaluate - return special code
+        log_info "User requested re-assessment before CJ selection"
+        return 2  # Special code: needs reassessment
+    fi
+
     local topic_file="$output_dir/topic_analysis.json"
     local recommendation_file="$output_dir/cj_recommendation.json"
 
@@ -1530,8 +1866,126 @@ select_chief_justice() {
         return 1
     fi
 
+    # Get the recommended CJ
+    local recommended_cj
+    recommended_cj=$(jq -r '.recommended_chief_justice' "$recommendation_file")
+
+    # Step 3: Record selection to history
+    local debate_id
+    debate_id=$(jq -r '.debate_id // empty' "$recommendation_file")
+    if [[ -z "$debate_id" ]]; then
+        debate_id=$(slugify "$topic")_$(date '+%Y%m%d_%H%M%S')
+    fi
+    record_cj_selection "$debate_id" "$topic" "$recommended_cj" "$recommendation_file" >&2
+
     # Return the recommended CJ (this is the ONLY thing that goes to stdout)
-    jq -r '.recommended_chief_justice' "$recommendation_file"
+    echo "$recommended_cj"
+}
+
+#=============================================================================
+# Chief Justice History Tracking
+#=============================================================================
+
+# CJ history file location
+CJ_HISTORY_FILE="${COUNCIL_ROOT:-$SCRIPT_DIR/..}/config/chief_justice_history.json"
+
+# Record a CJ selection to history
+# Args: $1 = debate_id (or topic slug)
+#       $2 = topic
+#       $3 = selected CJ (claude, codex, gemini)
+#       $4 = recommendation file (optional, for scores)
+record_cj_selection() {
+    local debate_id="$1"
+    local topic="$2"
+    local selected_cj="$3"
+    local recommendation_file="${4:-}"
+
+    local timestamp
+    timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+    # Extract scores if recommendation file provided
+    local scores="{}"
+    local was_override="false"
+    if [[ -n "$recommendation_file" ]] && [[ -f "$recommendation_file" ]]; then
+        local recommended
+        recommended=$(jq -r '.recommended_chief_justice' "$recommendation_file")
+        if [[ "$recommended" != "$selected_cj" ]]; then
+            was_override="true"
+        fi
+        scores=$(jq -c '.rankings | map({(.model_id): {score: .context_weighted_score, cj_suitability: .chief_justice_suitability}}) | add' "$recommendation_file")
+    fi
+
+    # Create new entry
+    local entry
+    entry=$(jq -n \
+        --arg id "$debate_id" \
+        --arg topic "$topic" \
+        --arg cj "$selected_cj" \
+        --arg ts "$timestamp" \
+        --argjson scores "$scores" \
+        --argjson override "$was_override" \
+        '{
+            debate_id: $id,
+            topic: $topic,
+            selected_cj: $cj,
+            timestamp: $ts,
+            scores: $scores,
+            was_override: $override
+        }')
+
+    # Initialize or append to history file
+    if [[ -f "$CJ_HISTORY_FILE" ]]; then
+        # Append to existing history
+        local updated
+        updated=$(jq --argjson entry "$entry" '.selections += [$entry]' "$CJ_HISTORY_FILE")
+        echo "$updated" > "$CJ_HISTORY_FILE"
+    else
+        # Create new history file
+        ensure_dir "$(dirname "$CJ_HISTORY_FILE")"
+        jq -n --argjson entry "$entry" '{
+            version: "1.0",
+            description: "Chief Justice selection history for The Council of Legends",
+            selections: [$entry]
+        }' > "$CJ_HISTORY_FILE"
+    fi
+
+    log_debug "CJ selection recorded: $selected_cj for debate $debate_id"
+}
+
+# Get CJ selection history
+# Args: $1 = limit (optional, default 10)
+get_cj_history() {
+    local limit="${1:-10}"
+
+    if [[ ! -f "$CJ_HISTORY_FILE" ]]; then
+        log_info "No CJ selection history found"
+        return 0
+    fi
+
+    echo -e "${YELLOW}Chief Justice Selection History:${NC}"
+    jq -r ".selections | .[-$limit:] | reverse | .[] | \"  \\(.timestamp | split(\"T\")[0]) | \\(.selected_cj | ascii_upcase) | \\(.topic[:50])...\"" "$CJ_HISTORY_FILE"
+}
+
+# Get CJ selection statistics
+get_cj_statistics() {
+    if [[ ! -f "$CJ_HISTORY_FILE" ]]; then
+        log_info "No CJ selection history found"
+        return 0
+    fi
+
+    echo -e "${YELLOW}Chief Justice Statistics:${NC}"
+    local total
+    total=$(jq '.selections | length' "$CJ_HISTORY_FILE")
+    echo "  Total selections: $total"
+
+    echo ""
+    echo "  By AI:"
+    jq -r '.selections | group_by(.selected_cj) | map({ai: .[0].selected_cj, count: length}) | sort_by(.count) | reverse | .[] | "    \(.ai): \(.count) (\((.count / '"$total"' * 100) | floor)%)"' "$CJ_HISTORY_FILE"
+
+    local overrides
+    overrides=$(jq '[.selections[] | select(.was_override == true)] | length' "$CJ_HISTORY_FILE")
+    echo ""
+    echo "  User overrides: $overrides"
 }
 
 log_debug "Assessment module loaded"

@@ -43,8 +43,8 @@ load_config() {
 
     if [[ -f "$config_file" ]]; then
         log_debug "Loading configuration from: $config_file"
-        # shellcheck source=/dev/null
-        source "$config_file"
+        # Safe config loading - only allow KEY=VALUE patterns
+        _safe_load_config "$config_file"
     else
         log_warn "Configuration file not found: $config_file (using defaults)"
     fi
@@ -54,6 +54,51 @@ load_config() {
 
     # Refresh persona selections from config (they may have been set in council.conf)
     refresh_persona_selections
+}
+
+# Safe configuration loader - only allows KEY=VALUE patterns
+# Prevents arbitrary code execution from config files
+_safe_load_config() {
+    local config_file="$1"
+    local line_num=0
+
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        ((line_num++))
+
+        # Skip empty lines and comments
+        [[ -z "$line" ]] && continue
+        [[ "$line" =~ ^[[:space:]]*# ]] && continue
+
+        # Strip leading/trailing whitespace
+        line="${line#"${line%%[![:space:]]*}"}"
+        line="${line%"${line##*[![:space:]]}"}"
+
+        # Match KEY=VALUE or KEY="VALUE" patterns only
+        if [[ "$line" =~ ^([A-Za-z_][A-Za-z0-9_]*)=(.*)$ ]]; then
+            local key="${BASH_REMATCH[1]}"
+            local value="${BASH_REMATCH[2]}"
+
+            # Remove surrounding quotes if present
+            if [[ "$value" =~ ^\"(.*)\"$ ]] || [[ "$value" =~ ^\'(.*)\'$ ]]; then
+                value="${BASH_REMATCH[1]}"
+            fi
+
+            # Reject values containing shell metacharacters that could be dangerous
+            if [[ "$value" =~ [\$\`\(\)\;\&\|] ]]; then
+                log_warn "Config line $line_num: Ignoring potentially unsafe value for $key"
+                continue
+            fi
+
+            # Export the variable
+            export "$key=$value"
+            log_debug "Config: $key set"
+        else
+            # Line doesn't match safe pattern
+            if [[ -n "$line" ]] && [[ ! "$line" =~ ^[[:space:]]*$ ]]; then
+                log_debug "Config line $line_num: Ignoring non-standard line"
+            fi
+        fi
+    done < "$config_file"
 }
 
 # Refresh persona selections from environment/config variables
@@ -105,6 +150,238 @@ set_persona() {
 get_persona() {
     local ai="$1"
     echo "${PERSONA_SELECTIONS[$ai]:-default}"
+}
+
+#=============================================================================
+# Dynamic Persona Switching
+#=============================================================================
+
+# Dynamic persona mode flag
+DYNAMIC_PERSONAS="${DYNAMIC_PERSONAS:-false}"
+
+# History of persona switches during debate
+declare -a PERSONA_HISTORY=()
+
+# Enable dynamic persona switching
+enable_dynamic_personas() {
+    DYNAMIC_PERSONAS="true"
+    log_info "Dynamic persona switching enabled"
+}
+
+# Disable dynamic persona switching
+disable_dynamic_personas() {
+    DYNAMIC_PERSONAS="false"
+}
+
+# Check if dynamic personas are enabled
+is_dynamic_personas_enabled() {
+    [[ "$DYNAMIC_PERSONAS" == "true" ]]
+}
+
+# Record a persona switch to history
+record_persona_switch() {
+    local round="$1"
+    local ai="$2"
+    local old_persona="$3"
+    local new_persona="$4"
+    local reason="${5:-}"
+
+    local timestamp
+    timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+    local entry
+    entry=$(jq -n \
+        --arg round "$round" \
+        --arg ai "$ai" \
+        --arg from "$old_persona" \
+        --arg to "$new_persona" \
+        --arg reason "$reason" \
+        --arg time "$timestamp" \
+        '{round: ($round | tonumber), ai: $ai, from: $from, to: $to, reason: $reason, timestamp: $time}')
+
+    PERSONA_HISTORY+=("$entry")
+    log_info "Persona switch: $ai changed from $old_persona to $new_persona"
+}
+
+# Get persona history as JSON array
+get_persona_history() {
+    if [[ ${#PERSONA_HISTORY[@]} -eq 0 ]]; then
+        echo "[]"
+        return
+    fi
+
+    printf '%s\n' "${PERSONA_HISTORY[@]}" | jq -s '.'
+}
+
+# Switch persona for an AI and record it
+switch_persona() {
+    local round="$1"
+    local ai="$2"
+    local new_persona="$3"
+    local reason="${4:-manual switch}"
+
+    local old_persona
+    old_persona=$(get_persona "$ai")
+
+    if [[ "$old_persona" == "$new_persona" ]]; then
+        return 0  # No change needed
+    fi
+
+    # Validate new persona exists
+    local persona_file
+    persona_file=$(get_persona_file "$new_persona")
+    if [[ ! -f "$persona_file" ]]; then
+        log_warn "Persona '$new_persona' not found, keeping '$old_persona'"
+        return 1
+    fi
+
+    set_persona "$ai" "$new_persona"
+    record_persona_switch "$round" "$ai" "$old_persona" "$new_persona" "$reason"
+    return 0
+}
+
+# Get all available persona IDs
+list_available_persona_ids() {
+    local toon_files=("$COUNCIL_ROOT"/config/personas/*.toon)
+    local ids=()
+
+    for file in "${toon_files[@]}"; do
+        if [[ -f "$file" ]]; then
+            local basename
+            basename=$(basename "$file" .toon)
+            ids+=("$basename")
+        fi
+    done
+
+    printf '%s\n' "${ids[@]}"
+}
+
+# Suggest persona switches based on debate context (calls arbiter)
+# Args: $1 = debate_dir, $2 = round number, $3 = topic
+# Returns: JSON with suggested switches
+suggest_persona_switches() {
+    local debate_dir="$1"
+    local round="$2"
+    local topic="$3"
+
+    if ! is_dynamic_personas_enabled; then
+        echo '{"suggestions": []}'
+        return 0
+    fi
+
+    # Get available personas
+    local available_personas
+    available_personas=$(list_available_persona_ids | jq -R -s 'split("\n") | map(select(length > 0))')
+
+    # Get current personas
+    local current_personas
+    current_personas=$(jq -n \
+        --arg claude "$(get_persona claude)" \
+        --arg codex "$(get_persona codex)" \
+        --arg gemini "$(get_persona gemini)" \
+        '{claude: $claude, codex: $codex, gemini: $gemini}')
+
+    # Get debate context from recent rounds
+    local context=""
+    local prev_round=$((round - 1))
+    for ai in claude codex gemini; do
+        local prev_file="$debate_dir/responses/round_${prev_round}_${ai}.md"
+        if [[ -f "$prev_file" ]]; then
+            local snippet
+            snippet=$(head -20 "$prev_file" | tr '\n' ' ' | cut -c1-200)
+            context+="$ai (last round): $snippet... "
+        fi
+    done
+
+    # Build prompt for arbiter
+    local prompt
+    prompt=$(cat <<EOF
+Analyze the debate and suggest persona switches to improve coverage and diversity.
+
+TOPIC: $topic
+ROUND: $round
+
+CURRENT PERSONAS:
+$current_personas
+
+AVAILABLE PERSONAS:
+$available_personas
+
+RECENT CONTEXT:
+$context
+
+Consider:
+1. Are important perspectives missing? (e.g., no ethical focus when ethics are relevant)
+2. Is there too much agreement? (might need a contrarian persona)
+3. Has the debate stagnated? (might need fresh perspectives)
+4. Are technical details missing? (might need specialist personas)
+
+Output ONLY valid JSON:
+{
+  "suggestions": [
+    {"ai": "claude|codex|gemini", "new_persona": "persona_id", "reason": "brief reason"}
+  ],
+  "reasoning": "overall analysis of persona balance"
+}
+
+If no changes needed, return {"suggestions": [], "reasoning": "current balance is good"}
+EOF
+)
+
+    # Invoke arbiter for suggestions
+    local temp_file
+    temp_file=$(mktemp "${TMPDIR:-/tmp}/persona_suggest.XXXXXX")
+    trap "rm -f '$temp_file'" RETURN
+
+    # Source groq adapter if not already loaded
+    local adapter_file="$COUNCIL_ROOT/lib/adapters/groq_adapter.sh"
+    if [[ -f "$adapter_file" ]]; then
+        source "$adapter_file"
+
+        if invoke_groq "$prompt" "$temp_file"; then
+            local response
+            response=$(cat "$temp_file")
+            # Try to extract JSON
+            if echo "$response" | jq . >/dev/null 2>&1; then
+                echo "$response"
+                return 0
+            fi
+        fi
+    fi
+
+    # Fallback: no suggestions
+    echo '{"suggestions": [], "reasoning": "arbiter unavailable"}'
+}
+
+# Apply suggested persona switches
+# Args: $1 = suggestions JSON, $2 = round number
+apply_persona_suggestions() {
+    local suggestions_json="$1"
+    local round="$2"
+
+    local count
+    count=$(echo "$suggestions_json" | jq '.suggestions | length')
+
+    if [[ "$count" -eq 0 ]]; then
+        log_debug "No persona switches suggested for round $round"
+        return 0
+    fi
+
+    echo ""
+    echo -e "${YELLOW}Dynamic Persona Suggestions for Round $round:${NC}"
+
+    # Apply each suggestion
+    echo "$suggestions_json" | jq -c '.suggestions[]' | while read -r suggestion; do
+        local ai new_persona reason
+        ai=$(echo "$suggestion" | jq -r '.ai')
+        new_persona=$(echo "$suggestion" | jq -r '.new_persona')
+        reason=$(echo "$suggestion" | jq -r '.reason')
+
+        echo "  • $ai: switching to $new_persona ($reason)"
+        switch_persona "$round" "$ai" "$new_persona" "$reason"
+    done
+
+    echo ""
 }
 
 # Get persona file path (TOON format, with JSON fallback)
@@ -328,10 +605,43 @@ save_metadata() {
         "turn_timeout": $TURN_TIMEOUT
     },
     "personas": {
-        "claude": "${PERSONA_SELECTIONS[claude]:-default}",
-        "codex": "${PERSONA_SELECTIONS[codex]:-default}",
-        "gemini": "${PERSONA_SELECTIONS[gemini]:-default}"
+        "initial": {
+            "claude": "${PERSONA_SELECTIONS[claude]:-default}",
+            "codex": "${PERSONA_SELECTIONS[codex]:-default}",
+            "gemini": "${PERSONA_SELECTIONS[gemini]:-default}"
+        },
+        "dynamic_enabled": $DYNAMIC_PERSONAS
     }
 }
 EOF
+}
+
+# Update metadata with persona history at end of debate
+update_metadata_with_persona_history() {
+    local debate_dir="$1"
+    local metadata_file="$debate_dir/metadata.json"
+
+    if [[ ! -f "$metadata_file" ]]; then
+        return 1
+    fi
+
+    local persona_history
+    persona_history=$(get_persona_history)
+
+    local final_personas
+    final_personas=$(jq -n \
+        --arg claude "$(get_persona claude)" \
+        --arg codex "$(get_persona codex)" \
+        --arg gemini "$(get_persona gemini)" \
+        '{claude: $claude, codex: $codex, gemini: $gemini}')
+
+    # Update the metadata file
+    local temp_file="${metadata_file}.tmp"
+    jq --argjson history "$persona_history" \
+       --argjson final "$final_personas" \
+       '.personas.final = $final | .personas.switches = $history' \
+       "$metadata_file" > "$temp_file"
+    mv "$temp_file" "$metadata_file"
+
+    log_debug "Metadata updated with persona history (${#PERSONA_HISTORY[@]} switches)"
 }

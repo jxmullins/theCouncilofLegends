@@ -336,13 +336,16 @@ Create a plan in JSON format:
 }
 
 Consider the task type and complexity when choosing work mode.
-Output ONLY valid JSON.
+
+CRITICAL: Your response must be ONLY valid JSON. No explanations, no questions, no markdown formatting.
+Do NOT ask clarifying questions. Make reasonable assumptions based on the task description.
+Start your response with { and end with }. Nothing else.
 EOF
 )
 
     # Use PM to create plan
     local system_prompt
-    system_prompt="You are the Project Manager coordinating a team of AI assistants. Create a clear, actionable execution plan."
+    system_prompt="You are a Project Manager bot that outputs ONLY JSON. Never include explanations, questions, or prose. Your entire response must be valid JSON that can be parsed directly. If you need to make assumptions, make them silently and proceed with the plan."
 
     local temp_response="${output_file}.raw"
 

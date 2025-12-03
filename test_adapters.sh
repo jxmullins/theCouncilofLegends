@@ -106,8 +106,10 @@ test_claude() {
     log_info "Sending test prompt to Claude..."
     log_info "Prompt: \"$TEST_PROMPT\""
 
-    local output_file="/tmp/council_test_claude.txt"
-    local error_file="/tmp/council_test_claude_err.txt"
+    local output_file error_file
+    output_file=$(mktemp "${TMPDIR:-/tmp}/council_test_claude.XXXXXX")
+    error_file=$(mktemp "${TMPDIR:-/tmp}/council_test_claude_err.XXXXXX")
+    trap "rm -f '$output_file' '$error_file'" RETURN
 
     # Claude CLI invocation with -p for non-interactive
     # Note: Unset ANTHROPIC_API_KEY if it contains placeholder value to use built-in auth
@@ -152,8 +154,10 @@ test_codex() {
     log_info "Sending test prompt to Codex..."
     log_info "Prompt: \"$TEST_PROMPT\""
 
-    local output_file="/tmp/council_test_codex.txt"
-    local error_file="/tmp/council_test_codex_err.txt"
+    local output_file error_file
+    output_file=$(mktemp "${TMPDIR:-/tmp}/council_test_codex.XXXXXX")
+    error_file=$(mktemp "${TMPDIR:-/tmp}/council_test_codex_err.XXXXXX")
+    trap "rm -f '$output_file' '$error_file'" RETURN
 
     # Codex CLI uses 'exec' subcommand for non-interactive mode
     # --skip-git-repo-check allows running in non-trusted directories
@@ -193,8 +197,10 @@ test_gemini() {
     log_info "Sending test prompt to Gemini..."
     log_info "Prompt: \"$TEST_PROMPT\""
 
-    local output_file="/tmp/council_test_gemini.txt"
-    local error_file="/tmp/council_test_gemini_err.txt"
+    local output_file error_file
+    output_file=$(mktemp "${TMPDIR:-/tmp}/council_test_gemini.XXXXXX")
+    error_file=$(mktemp "${TMPDIR:-/tmp}/council_test_gemini_err.XXXXXX")
+    trap "rm -f '$output_file' '$error_file'" RETURN
 
     # Gemini CLI invocation (positional query = one-shot mode)
     # Use --output-format text for clean text output

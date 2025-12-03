@@ -106,6 +106,14 @@ run_rebuttal_round() {
     local mode="$3"
     local round="$4"
 
+    # Dynamic persona switching: suggest and apply changes before round starts
+    if is_dynamic_personas_enabled && [[ "$round" -gt 2 ]]; then
+        log_debug "Checking for dynamic persona suggestions..."
+        local suggestions
+        suggestions=$(suggest_persona_switches "$debate_dir" "$round" "$topic")
+        apply_persona_suggestions "$suggestions" "$round"
+    fi
+
     log_info "Round $round: Rebuttals"
     header "Round $round: Rebuttals"
 
@@ -250,6 +258,11 @@ run_debate() {
 
     # Generate transcript
     generate_transcript "$debate_dir" "$topic"
+
+    # Update metadata with persona history (if dynamic personas were used)
+    if is_dynamic_personas_enabled; then
+        update_metadata_with_persona_history "$debate_dir"
+    fi
 
     # Final output
     separator "═" 52

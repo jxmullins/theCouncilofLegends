@@ -52,6 +52,9 @@ ${prompt}"
         return 1
     fi
 
+    # Normalize output for consistency
+    normalize_output_file "$output_file"
+
     # Clean up error file on success
     rm -f "$error_file"
 

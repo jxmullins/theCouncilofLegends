@@ -137,6 +137,37 @@ run_with_timeout() {
 }
 
 #=============================================================================
+# Output Normalization
+#=============================================================================
+
+# Normalize LLM output for consistency across adapters
+# - Removes trailing whitespace from each line
+# - Normalizes line endings to Unix (\n)
+# - Ensures exactly one trailing newline
+# - Removes any BOM characters
+normalize_output_file() {
+    local file="$1"
+
+    if [[ ! -f "$file" ]] || [[ ! -s "$file" ]]; then
+        return 0
+    fi
+
+    local temp_file="${file}.norm"
+
+    # Remove BOM, normalize line endings, trim trailing whitespace per line,
+    # then ensure single trailing newline
+    sed 's/\xEF\xBB\xBF//g' "$file" | \
+        tr -d '\r' | \
+        sed 's/[[:space:]]*$//' | \
+        sed -e :a -e '/^\n*$/{$d;N;};/\n$/ba' > "$temp_file"
+
+    # Ensure single trailing newline
+    echo "" >> "$temp_file"
+
+    mv "$temp_file" "$file"
+}
+
+#=============================================================================
 # String Helpers
 #=============================================================================
 
@@ -191,6 +222,52 @@ require_command() {
     return 0
 }
 
+# Check system dependencies (jq, curl, python3)
+# These are required by various parts of the codebase
+validate_system_dependencies() {
+    local missing=()
+    local warnings=()
+
+    # Required dependencies
+    if ! command -v jq &>/dev/null; then
+        missing+=("jq (JSON processing)")
+    fi
+
+    if ! command -v curl &>/dev/null; then
+        missing+=("curl (API requests)")
+    fi
+
+    if ! command -v python3 &>/dev/null; then
+        missing+=("python3 (TOON parser)")
+    fi
+
+    # Optional but recommended
+    if ! command -v gtimeout &>/dev/null && ! command -v timeout &>/dev/null; then
+        warnings+=("timeout/gtimeout (for request timeouts - install coreutils)")
+    fi
+
+    # Report warnings
+    for warn in "${warnings[@]}"; do
+        log_warn "Optional dependency missing: $warn"
+    done
+
+    # Report errors and fail if required deps missing
+    if [[ ${#missing[@]} -gt 0 ]]; then
+        log_error "Missing required system dependencies:"
+        for dep in "${missing[@]}"; do
+            log_error "  - $dep"
+        done
+        echo ""
+        echo "Install missing dependencies:"
+        echo "  macOS:   brew install jq curl python3"
+        echo "  Ubuntu:  sudo apt install jq curl python3"
+        echo "  Fedora:  sudo dnf install jq curl python3"
+        return 1
+    fi
+
+    return 0
+}
+
 validate_cli_availability() {
     local missing=()
 
@@ -206,6 +283,24 @@ validate_cli_availability() {
         return 1
     fi
 
+    return 0
+}
+
+# Full preflight check - run before debates/assessments
+validate_all_dependencies() {
+    log_debug "Running dependency preflight check..."
+
+    # Check system dependencies first
+    if ! validate_system_dependencies; then
+        return 1
+    fi
+
+    # Then check AI CLIs
+    if ! validate_cli_availability; then
+        return 1
+    fi
+
+    log_debug "All dependencies validated"
     return 0
 }
 

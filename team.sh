@@ -92,6 +92,10 @@ ${BOLD}OPTIONS${NC}
                      Example: --output-dir ~/devFiles/my-project
                      If not specified, prompts interactively after plan approval
 
+    --add-dir DIR    Grant AI team access to external directories
+                     Example: --add-dir ~/devFiles/other-project
+                     Can be specified multiple times for multiple directories
+
     --verbose        Enable verbose/debug logging
 
     --help           Show this help message
@@ -131,6 +135,7 @@ parse_args() {
     CHECKPOINT_LEVEL="all"
     SHOW_COSTS=false
     OUTPUT_DIR=""  # External project directory
+    ADD_DIRS=""    # Additional directories for AI access
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -164,6 +169,15 @@ parse_args() {
                 ;;
             --output-dir)
                 OUTPUT_DIR="$2"
+                shift 2
+                ;;
+            --add-dir)
+                # Accumulate multiple directories (space-separated)
+                if [[ -n "$ADD_DIRS" ]]; then
+                    ADD_DIRS="$ADD_DIRS $2"
+                else
+                    ADD_DIRS="$2"
+                fi
                 shift 2
                 ;;
             --verbose|-v)
@@ -262,6 +276,7 @@ main() {
     export TEAM_CHECKPOINT_LEVEL="$CHECKPOINT_LEVEL"
     export TEAM_SHOW_COSTS="$SHOW_COSTS"
     export TEAM_OUTPUT_DIR="$OUTPUT_DIR"
+    export TEAM_ADD_DIRS="$ADD_DIRS"
 
     # Run the team workflow
     run_team_workflow "$TASK"

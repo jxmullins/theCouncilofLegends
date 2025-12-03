@@ -1,0 +1,155 @@
+; Arbiter Chief Justice Recommendation Prompt Template
+; Used by 4th AI to combine baseline scores with topic relevance and recommend a Chief Justice
+
+template_id: arbiter_chief_justice_recommendation
+version: "1.0"
+description: "Prompt template for 4th AI to combine baseline scores with topic relevance and recommend a Chief Justice"
+task_type: recommendation
+
+; System prompt for CJ recommendation
+system_prompt: '''
+You are the impartial Arbiter for The Council of Legends, a multi-AI deliberation system. Your role is to recommend which council member should serve as Chief Justice for a specific debate.
+
+The Chief Justice role requires:
+1. Strong capabilities in the areas RELEVANT TO THIS SPECIFIC TOPIC
+2. Good meta-cognition (knowing limits, acknowledging uncertainty)
+3. Strong communication and collaboration skills
+4. Ability to synthesize diverse viewpoints fairly
+
+You will combine:
+- Baseline capability scores (from prior assessment)
+- Topic relevance weights (from topic analysis)
+
+To produce context-weighted scores that identify the best Chief Justice FOR THIS PARTICULAR DEBATE.
+
+Output ONLY valid JSON matching the specified schema. No explanatory text outside the JSON.
+'''
+
+; User prompt template with variable placeholders
+user_prompt_template: '''
+Based on the baseline scores and topic analysis, recommend a Chief Justice for this debate.
+
+## DEBATE TOPIC
+{{topic}}
+
+## TOPIC ANALYSIS
+The following category relevance weights were determined for this topic:
+{{topic_relevance}}
+
+## BASELINE SCORES
+These are the baseline capability scores for each council member:
+{{baseline_scores}}
+
+## YOUR TASK
+1. Calculate context-weighted scores for each council member:
+   - For each category: baseline_score * relevance_weight
+   - Sum the weighted scores
+   - Normalize to get final context-weighted score
+2. Calculate Chief Justice suitability for this specific topic:
+   - Weight meta_cognition, communication, collaboration more heavily for CJ role
+   - Consider topic-relevant strengths
+3. Rank council members by context-weighted CJ suitability
+4. Recommend the top-ranked member as Chief Justice
+5. Show the score delta (how much each AI gained/lost vs baseline due to topic relevance)
+
+## OUTPUT FORMAT
+Return a JSON object with this exact structure:
+```json
+{
+  "debate_id": "{{debate_id}}",
+  "calculated_at": "{{timestamp}}",
+  "methodology": "Context-weighted scoring: (baseline_score * relevance_weight) summed across categories, normalized. CJ suitability adds 1.5x weight to meta_cognition, communication, collaboration.",
+  "rankings": [
+    {
+      "model_id": "<claude|codex|gemini>",
+      "context_rank": <1-3>,
+      "context_weighted_score": <normalized 1-10>,
+      "baseline_score": <from baseline>,
+      "score_delta": <context - baseline, can be negative>,
+      "relevant_category_scores": {
+        "<category_id>": {
+          "score": <baseline score>,
+          "relevance_weight": <0.0-1.0>,
+          "weighted_contribution": <score * weight>
+        }
+      },
+      "chief_justice_suitability": <1-10 for this topic>
+    }
+  ],
+  "recommended_chief_justice": "<claude|codex|gemini>",
+  "recommendation_reasoning": "<2-3 sentences explaining why this AI is best suited for CJ on this topic>",
+  "ranking_table_markdown": "| Rank | AI | Context Score | Baseline | Delta | CJ Suitability |\n|------|-----|---------------|----------|-------|----------------|\n| 1 | ... | ... | ... | +/-... | ... |",
+  "alternative_considerations": "<any reasons user might want to override, e.g., close scores>"
+}
+```
+'''
+
+; Variable definitions
+variables:
+  topic:
+    description: "The debate topic"
+    source: "debate metadata"
+  topic_relevance:
+    description: "Category relevance weights from topic analysis"
+    source: "arbiter_topic output -> category_relevance"
+  baseline_scores:
+    description: "Baseline capability scores for each council member"
+    source: "arbiter_baseline output -> baseline_rankings"
+  debate_id:
+    description: "Unique identifier for this debate"
+    source: "generated from timestamp + topic slug"
+  timestamp:
+    description: "Current ISO timestamp"
+    source: "date -u +%Y-%m-%dT%H:%M:%SZ"
+
+; Output schema (kept as JSON for validation tooling compatibility)
+output_schema: '''
+{
+  "type": "object",
+  "required": ["debate_id", "calculated_at", "methodology", "rankings", "recommended_chief_justice", "recommendation_reasoning", "ranking_table_markdown"],
+  "properties": {
+    "debate_id": { "type": "string" },
+    "calculated_at": { "type": "string", "format": "date-time" },
+    "methodology": { "type": "string" },
+    "rankings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["model_id", "context_rank", "context_weighted_score", "baseline_score", "score_delta", "chief_justice_suitability"],
+        "properties": {
+          "model_id": { "type": "string", "enum": ["claude", "codex", "gemini"] },
+          "context_rank": { "type": "integer", "minimum": 1, "maximum": 3 },
+          "context_weighted_score": { "type": "number" },
+          "baseline_score": { "type": "number" },
+          "score_delta": { "type": "number" },
+          "relevant_category_scores": { "type": "object" },
+          "chief_justice_suitability": { "type": "number", "minimum": 1, "maximum": 10 }
+        }
+      }
+    },
+    "recommended_chief_justice": { "type": "string", "enum": ["claude", "codex", "gemini"] },
+    "recommendation_reasoning": { "type": "string" },
+    "ranking_table_markdown": { "type": "string" },
+    "alternative_considerations": { "type": "string" }
+  }
+}
+'''
+
+; Example scenarios
+examples[3]:
+  - scenario: "Technical OAuth debate"
+    expected_winner: codex
+    reasoning: "Programming expertise most relevant; Codex likely has highest baseline in programming_languages"
+  - scenario: "AI ethics debate"
+    expected_winner: claude
+    reasoning: "Legal/ethical reasoning most relevant; Claude typically strong in ethics and safety considerations"
+  - scenario: "Balanced strategic debate"
+    expected_winner: varies
+    reasoning: "When multiple categories are equally relevant, baseline CJ suitability and meta-cognition become tiebreakers"
+
+; Implementation notes
+notes[4]:
+  - "Score delta shows how topic context shifts rankings - positive means AI benefits from this topic"
+  - "Close scores (within 0.5) should be flagged in alternative_considerations"
+  - "The user can always override the recommendation"
+  - "CJ suitability weights meta_cognition, communication, collaboration 1.5x because these are core CJ skills regardless of topic"

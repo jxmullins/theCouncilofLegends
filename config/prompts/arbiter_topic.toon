@@ -1,0 +1,175 @@
+; Arbiter Topic Analysis Prompt Template
+; Used by 4th AI to analyze a debate topic and determine category relevance weights
+
+template_id: arbiter_topic_analysis
+version: "1.0"
+description: "Prompt template for 4th AI to analyze a debate topic and determine which capability categories are most relevant"
+task_type: topic
+
+; System prompt for topic analysis
+system_prompt: '''
+You are the impartial Arbiter for The Council of Legends, a multi-AI deliberation system. Your role is to analyze debate topics and determine which capability categories are most relevant for addressing the topic effectively.
+
+For each topic, you will:
+1. Identify the key domains, skills, and knowledge areas required
+2. Assign relevance weights (0.0 to 1.0) to each questionnaire category
+3. Optionally drill down to subcategories or specific items for precision
+
+Relevance scale:
+- 0.0: Completely irrelevant to this topic
+- 0.2: Minor tangential relevance
+- 0.4: Somewhat relevant, helpful but not essential
+- 0.6: Moderately relevant, important for good analysis
+- 0.8: Highly relevant, critical for addressing the topic
+- 1.0: Essential, directly addresses the core of the topic
+
+Output ONLY valid JSON matching the specified schema. No explanatory text outside the JSON.
+'''
+
+; User prompt template with variable placeholders
+user_prompt_template: '''
+Analyze the following debate topic and determine category relevance weights.
+
+## DEBATE TOPIC
+{{topic}}
+
+## ADDITIONAL CONTEXT (if provided)
+{{context}}
+
+## QUESTIONNAIRE CATEGORIES
+These are the capability categories from the council's assessment questionnaire:
+
+{{questionnaire_structure}}
+
+## YOUR TASK
+1. Analyze what skills/knowledge are needed to address this topic well
+2. Assign a relevance weight (0.0-1.0) to each category
+3. For categories with subcategories (programming_languages, accessibility_inclusive_design), provide subcategory-level weights if appropriate
+4. Identify any specific items that are particularly relevant
+5. Note if this topic might require a mini-questionnaire for areas not covered
+
+## OUTPUT FORMAT
+Return a JSON object with this exact structure:
+```json
+{
+  "analyst": {
+    "id": "groq",
+    "model_name": "{{model_name}}"
+  },
+  "analyzed_at": "{{timestamp}}",
+  "topic_summary": "<1-2 sentence summary of the topic>",
+  "topic_keywords": ["keyword1", "keyword2", "..."],
+  "category_relevance": [
+    {
+      "category_id": "reasoning_logic",
+      "relevance": <0.0-1.0>,
+      "reasoning": "<why this relevance level>"
+    },
+    {
+      "category_id": "programming_languages",
+      "relevance": <0.0-1.0>,
+      "reasoning": "<why this relevance level>",
+      "subcategory_relevance": [
+        {
+          "subcategory_id": "established_modern",
+          "relevance": <0.0-1.0>,
+          "reasoning": "<if specific subcategory matters>"
+        }
+      ],
+      "item_relevance": [
+        {
+          "item_id": "python",
+          "relevance": <0.0-1.0>
+        }
+      ]
+    }
+  ],
+  "analysis_notes": "<any additional observations>",
+  "mini_questionnaire_needed": {
+    "needed": <true|false>,
+    "reason": "<if true, what topic area is missing>",
+    "suggested_topic": "<suggested mini-questionnaire topic>"
+  }
+}
+```
+'''
+
+; Variable definitions
+variables:
+  topic:
+    description: "The debate topic or question presented to the council"
+    source: "user input or debate metadata"
+  context:
+    description: "Optional additional context about the topic"
+    source: "user input"
+    default: "No additional context provided."
+  questionnaire_structure:
+    description: "Full structure of questionnaire categories, subcategories, and items"
+    source: "config/questionnaire_v1.toon"
+  model_name:
+    description: "The Groq model being used"
+    source: "GROQ_MODEL environment variable"
+  timestamp:
+    description: "Current ISO timestamp"
+    source: "date -u +%Y-%m-%dT%H:%M:%SZ"
+
+; Output schema (kept as JSON for validation tooling compatibility)
+output_schema: '''
+{
+  "type": "object",
+  "required": ["analyst", "analyzed_at", "topic_summary", "category_relevance"],
+  "properties": {
+    "analyst": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "model_name": { "type": "string" }
+      }
+    },
+    "analyzed_at": { "type": "string", "format": "date-time" },
+    "topic_summary": { "type": "string" },
+    "topic_keywords": { "type": "array", "items": { "type": "string" } },
+    "category_relevance": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["category_id", "relevance", "reasoning"],
+        "properties": {
+          "category_id": { "type": "string" },
+          "relevance": { "type": "number", "minimum": 0, "maximum": 1 },
+          "reasoning": { "type": "string" },
+          "subcategory_relevance": { "type": "array" },
+          "item_relevance": { "type": "array" }
+        }
+      }
+    },
+    "analysis_notes": { "type": "string" },
+    "mini_questionnaire_needed": {
+      "type": "object",
+      "properties": {
+        "needed": { "type": "boolean" },
+        "reason": { "type": "string" },
+        "suggested_topic": { "type": "string" }
+      }
+    }
+  }
+}
+'''
+
+; Example scenarios
+examples[3]:
+  - topic: "Should we refactor our OAuth implementation to use PKCE flow?"
+    expected_high_relevance: "programming_languages, reasoning_logic, domain_knowledge"
+    expected_low_relevance: "legal_ethical, accessibility_inclusive_design"
+  - topic: "Is it ethical to use facial recognition in public schools?"
+    expected_high_relevance: "legal_ethical, meta_cognition, argumentation"
+    expected_low_relevance: "programming_languages"
+  - topic: "How should we make our mobile app accessible for users with motor impairments?"
+    expected_high_relevance: "accessibility_inclusive_design, programming_languages, communication"
+    expected_low_relevance: "legal_ethical"
+
+; Implementation notes
+notes[3]:
+  - "The sum of all relevance weights does NOT need to equal 1.0 - each category is weighted independently"
+  - "Subcategory and item-level weights are optional but useful for precision"
+  - "If a topic clearly falls outside the questionnaire's coverage, flag for mini-questionnaire"

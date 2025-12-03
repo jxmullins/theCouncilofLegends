@@ -93,6 +93,9 @@ invoke_groq() {
     # Write the extracted content to output file
     echo "$content" > "$output_file"
 
+    # Normalize output for consistency
+    normalize_output_file "$output_file"
+
     # Clean up temp files on success
     rm -f "$response_file" "$error_file"
 
