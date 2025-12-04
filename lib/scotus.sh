@@ -4,6 +4,13 @@
 # Judicial-style debate with majority/concurrence/dissent opinions
 #
 
+# Source LLM manager for dynamic council membership
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -z "${LLM_MANAGER_LOADED:-}" ]]; then
+    source "$SCRIPT_DIR/llm_manager.sh"
+    export LLM_MANAGER_LOADED=true
+fi
+
 # Source SCOTUS-specific prompt builders
 source "${COUNCIL_ROOT}/lib/scotus_prompts.sh"
 
@@ -64,7 +71,9 @@ run_scotus_opening_round() {
     log_info "Round 1: Opening Arguments"
     header "Round 1: Opening Arguments on the Resolution"
 
-    for ai in claude codex gemini; do
+    local members
+    mapfile -t members < <(get_council_members)
+    for ai in "${members[@]}"; do
         local system_prompt
         system_prompt=$(load_persona "$ai")
 
@@ -127,7 +136,9 @@ run_scotus_rebuttal_round() {
     log_info "Round $round: Rebuttals"
     header "Round $round: Rebuttals"
 
-    for ai in claude codex gemini; do
+    local members
+    mapfile -t members < <(get_council_members)
+    for ai in "${members[@]}"; do
         local system_prompt
         system_prompt=$(load_persona "$ai")
 
@@ -216,7 +227,9 @@ $(cat "$round_file")
             echo -e "  Vote: ${GREEN}$vote_affirm affirm${NC} - ${RED}$vote_oppose oppose${NC}"
             echo -e "  Majority position: ${CYAN}$majority${NC}"
 
-            for ai in claude codex gemini; do
+            local members
+            mapfile -t members < <(get_council_members)
+            for ai in "${members[@]}"; do
                 local pos conf
                 pos=$(jq -r ".position_by_ai.$ai.position // \"unknown\"" "$output_file")
                 conf=$(jq -r ".position_by_ai.$ai.confidence // 0" "$output_file")
@@ -314,7 +327,9 @@ EOF
     local minority_ais=()
     local nuanced_ais=()
 
-    for ai in claude codex gemini; do
+    local members
+    mapfile -t members < <(get_council_members)
+    for ai in "${members[@]}"; do
         local pos
         pos=$(jq -r ".position_by_ai.$ai.position" "$position_analysis_file")
         if [[ "$pos" == "$plurality_position" ]]; then
@@ -405,7 +420,9 @@ run_opinion_phase() {
     affirm_args=""
     oppose_args=""
 
-    for ai in claude codex gemini; do
+    local members
+    mapfile -t members < <(get_council_members)
+    for ai in "${members[@]}"; do
         local pos key_contrib
         pos=$(jq -r ".position_by_ai.$ai.position" "$position_analysis_file")
         key_contrib=$(jq -r ".position_by_ai.$ai.key_contribution" "$position_analysis_file")
@@ -523,7 +540,9 @@ generate_scotus_transcript() {
     # Build persona info string if non-default personas used
     local persona_info=""
     local has_custom_persona=false
-    for ai in claude codex gemini; do
+    local members
+    mapfile -t members < <(get_council_members)
+    for ai in "${members[@]}"; do
         if [[ "$(get_persona "$ai")" != "default" ]]; then
             has_custom_persona=true
             break
@@ -531,7 +550,9 @@ generate_scotus_transcript() {
     done
     if [[ "$has_custom_persona" == "true" ]]; then
         persona_info="- **Personas:**"
-        for ai in claude codex gemini; do
+        local members
+        mapfile -t members < <(get_council_members)
+        for ai in "${members[@]}"; do
             local display_name
             display_name=$(get_persona_display_name "$ai" "$(get_persona "$ai")")
             persona_info="$persona_info
@@ -704,7 +725,9 @@ run_scotus_debate() {
 
     # Show personas if any non-default
     local has_custom_persona=false
-    for ai in claude codex gemini; do
+    local members
+    mapfile -t members < <(get_council_members)
+    for ai in "${members[@]}"; do
         if [[ "$(get_persona "$ai")" != "default" ]]; then
             has_custom_persona=true
             break
@@ -712,7 +735,9 @@ run_scotus_debate() {
     done
     if [[ "$has_custom_persona" == "true" ]]; then
         echo -e "${WHITE}Personas:${NC}"
-        for ai in claude codex gemini; do
+        local members
+        mapfile -t members < <(get_council_members)
+        for ai in "${members[@]}"; do
             local persona display_name ai_color
             persona=$(get_persona "$ai")
             display_name=$(get_persona_display_name "$ai" "$persona")

@@ -4,35 +4,15 @@
 # Core orchestration logic for running debates
 #
 
-#=============================================================================
-# AI Invocation Dispatcher
-#=============================================================================
+# Source dispatcher for dynamic AI invocation
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -z "${DISPATCHER_LOADED:-}" ]]; then
+    source "$SCRIPT_DIR/dispatcher.sh"
+    export DISPATCHER_LOADED=true
+fi
 
-invoke_ai() {
-    local ai="$1"
-    local prompt="$2"
-    local output_file="$3"
-    local system_prompt="${4:-}"
-
-    # Normalize AI name to lowercase for case-insensitive matching
-    ai=$(echo "$ai" | tr '[:upper:]' '[:lower:]')
-
-    case "$ai" in
-        claude)
-            invoke_claude "$prompt" "$output_file" "$system_prompt"
-            ;;
-        codex)
-            invoke_codex "$prompt" "$output_file" "$system_prompt"
-            ;;
-        gemini)
-            invoke_gemini "$prompt" "$output_file" "$system_prompt"
-            ;;
-        *)
-            log_error "Unknown AI: $ai"
-            return 1
-            ;;
-    esac
-}
+# Note: invoke_ai() is now provided by dispatcher.sh
+# It routes to adapters based on the provider field in the LLM registry
 
 #=============================================================================
 # Error Handling
@@ -80,7 +60,11 @@ run_opening_round() {
     local prompt
     prompt=$(build_opening_prompt "$topic" "$mode")
 
-    for ai in claude codex gemini; do
+    # Dynamic council membership
+    local members
+    mapfile -t members < <(get_council_members)
+
+    for ai in "${members[@]}"; do
         local system_prompt
         system_prompt=$(load_persona "$ai")
 
@@ -117,7 +101,11 @@ run_rebuttal_round() {
     log_info "Round $round: Rebuttals"
     header "Round $round: Rebuttals"
 
-    for ai in claude codex gemini; do
+    # Dynamic council membership
+    local members
+    mapfile -t members < <(get_council_members)
+
+    for ai in "${members[@]}"; do
         local system_prompt
         system_prompt=$(load_persona "$ai")
 
@@ -148,7 +136,11 @@ run_synthesis_round() {
     log_info "Final Round: Individual Syntheses"
     header "Final Round: Synthesis"
 
-    for ai in claude codex gemini; do
+    # Dynamic council membership
+    local members
+    mapfile -t members < <(get_council_members)
+
+    for ai in "${members[@]}"; do
         local system_prompt
         system_prompt=$(load_persona "$ai")
 

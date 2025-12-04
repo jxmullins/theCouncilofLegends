@@ -28,15 +28,33 @@ export COUNCIL_ROOT="$SCRIPT_DIR"
 
 source "$COUNCIL_ROOT/lib/utils.sh"
 source "$COUNCIL_ROOT/lib/config.sh"
+source "$COUNCIL_ROOT/lib/llm_manager.sh"  # Dynamic model registry (must be before adapters)
 source "$COUNCIL_ROOT/lib/context.sh"
+
+# Source adapters (core providers)
 source "$COUNCIL_ROOT/lib/adapters/claude_adapter.sh"
 source "$COUNCIL_ROOT/lib/adapters/codex_adapter.sh"
 source "$COUNCIL_ROOT/lib/adapters/gemini_adapter.sh"
 source "$COUNCIL_ROOT/lib/adapters/groq_adapter.sh"
+
+# Source optional adapters if they exist (local LLMs, custom endpoints)
+[[ -f "$COUNCIL_ROOT/lib/adapters/ollama_adapter.sh" ]] && \
+    source "$COUNCIL_ROOT/lib/adapters/ollama_adapter.sh"
+[[ -f "$COUNCIL_ROOT/lib/adapters/lmstudio_adapter.sh" ]] && \
+    source "$COUNCIL_ROOT/lib/adapters/lmstudio_adapter.sh"
+[[ -f "$COUNCIL_ROOT/lib/adapters/openai_compatible_adapter.sh" ]] && \
+    source "$COUNCIL_ROOT/lib/adapters/openai_compatible_adapter.sh"
+
+# Source dispatcher (routes invoke_ai to correct adapter)
+source "$COUNCIL_ROOT/lib/dispatcher.sh"
+
 source "$COUNCIL_ROOT/lib/debate.sh"
 source "$COUNCIL_ROOT/lib/assessment.sh"
 source "$COUNCIL_ROOT/lib/scotus.sh"
 source "$COUNCIL_ROOT/lib/budget.sh"
+
+# Initialize LLM registry (creates config/llms.toon if missing)
+init_llm_registry
 
 #=============================================================================
 # Help
@@ -51,6 +69,16 @@ ${PURPLE}╔══════════════════════�
 
 ${BOLD}USAGE${NC}
     ./council.sh \"Your topic or question\" [OPTIONS]
+    ./council.sh models <command>           # Manage AI models
+
+${BOLD}SUBCOMMANDS${NC}
+    models list          List all registered AI models
+    models add           Add a new model (interactive or direct)
+    models remove <id>   Remove a model from registry
+    models enable <id>   Enable model as council member
+    models disable <id>  Disable model as council member
+    models test [id]     Test model availability
+    models info <id>     Show model details
 
 ${BOLD}EXAMPLES${NC}
     ./council.sh \"What is the best programming language for beginners?\"
@@ -356,6 +384,17 @@ parse_args() {
 #=============================================================================
 
 main() {
+    # Handle subcommands before full initialization
+    # This allows 'models' command to work without loading full debate stack
+    case "${1:-}" in
+        models|llm)
+            shift
+            source "$COUNCIL_ROOT/lib/cli_commands.sh"
+            handle_models_command "$@"
+            exit $?
+            ;;
+    esac
+
     # Pre-parse for --config flag (needs to happen before full parse)
     local config_file_arg=""
     for arg in "$@"; do
@@ -389,6 +428,14 @@ main() {
         parse_personas "$PERSONAS_SPEC"
     fi
 
+    # Validate council size (minimum 2 members required for debate)
+    if ! validate_council_size 2; then
+        echo ""
+        echo -e "${YELLOW}Tip: Use './council.sh models list' to see available models${NC}"
+        echo -e "${YELLOW}     Use './council.sh models enable <id>' to add council members${NC}"
+        exit 1
+    fi
+
     # Display banner
     echo ""
     echo -e "${PURPLE}╔════════════════════════════════════════════════════╗${NC}"
@@ -399,7 +446,9 @@ main() {
 
     # Display active personas if any non-default
     local has_custom_persona=false
-    for ai in claude codex gemini; do
+    local members
+    mapfile -t members < <(get_council_members)
+    for ai in "${members[@]}"; do
         if [[ "$(get_persona "$ai")" != "default" ]]; then
             has_custom_persona=true
             break
@@ -408,7 +457,9 @@ main() {
 
     if [[ "$has_custom_persona" == "true" ]]; then
         echo -e "${BOLD}Active Personas:${NC}"
-        for ai in claude codex gemini; do
+        local members
+        mapfile -t members < <(get_council_members)
+        for ai in "${members[@]}"; do
             local persona
             persona=$(get_persona "$ai")
             local display_name

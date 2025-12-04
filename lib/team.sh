@@ -17,13 +17,37 @@ if [[ -z "${ROLES_LOADED:-}" ]]; then
     export ROLES_LOADED=true
 fi
 
+# Source LLM manager for dynamic team membership
+if [[ -z "${LLM_MANAGER_LOADED:-}" ]]; then
+    source "$SCRIPT_DIR/llm_manager.sh"
+    export LLM_MANAGER_LOADED=true
+fi
+
 #=============================================================================
-# Constants
+# Dynamic Team Arrays
 #=============================================================================
 
-# Team members (core council + optional arbiter)
-declare -a TEAM_MEMBERS=("claude" "codex" "gemini")
-declare -a TEAM_MEMBERS_WITH_ARBITER=("claude" "codex" "gemini" "arbiter")
+# These arrays are populated dynamically from the LLM registry
+declare -a TEAM_MEMBERS=()
+declare -a TEAM_MEMBERS_WITH_ARBITER=()
+
+# Refresh team member arrays from the LLM registry
+# Call this after any changes to council membership
+refresh_team_arrays() {
+    # Get council members from registry as team members
+    mapfile -t TEAM_MEMBERS < <(get_council_members)
+
+    # Team members with arbiter includes groq if available
+    TEAM_MEMBERS_WITH_ARBITER=("${TEAM_MEMBERS[@]}")
+    if get_llm_field "groq" "role" 2>/dev/null | grep -q "arbiter"; then
+        TEAM_MEMBERS_WITH_ARBITER+=("arbiter")
+    fi
+
+    log_debug "Refreshed team arrays: ${#TEAM_MEMBERS[@]} team members"
+}
+
+# Initialize arrays on first load
+refresh_team_arrays
 
 # Work modes
 declare -a VALID_WORK_MODES=("pair_programming" "consultation" "round_robin" "divide_conquer" "free_form")
