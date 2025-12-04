@@ -4,6 +4,13 @@
 # Common utilities for logging, colors, and helper functions
 #
 
+# Source LLM manager for dynamic council membership
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -z "${LLM_MANAGER_LOADED:-}" ]]; then
+    source "$SCRIPT_DIR/llm_manager.sh"
+    export LLM_MANAGER_LOADED=true
+fi
+
 # Colors
 export RED='\033[0;31m'
 export GREEN='\033[0;32m'
@@ -347,7 +354,9 @@ validate_system_dependencies() {
 validate_cli_availability() {
     local missing=()
 
-    for cli in claude codex gemini; do
+    local members
+    mapfile -t members < <(get_council_members)
+    for cli in "${members[@]}"; do
         if ! command -v "$cli" &>/dev/null; then
             missing+=("$cli")
         fi
@@ -455,7 +464,9 @@ EOF
         local found_round=false
 
         # Check if any responses exist for this round
-        for ai in claude codex gemini; do
+        local members
+        mapfile -t members < <(get_council_members)
+        for ai in "${members[@]}"; do
             local response_file="$debate_dir/responses/round_${round}_${ai}.md"
             if [[ -f "$response_file" ]]; then
                 found_round=true
@@ -476,7 +487,9 @@ EOF
         echo "" >> "$transcript_file"
 
         # Add each AI's response for this round
-        for ai in claude codex gemini; do
+        local members
+        mapfile -t members < <(get_council_members)
+        for ai in "${members[@]}"; do
             local response_file="$debate_dir/responses/round_${round}_${ai}.md"
             if [[ -f "$response_file" ]]; then
                 local ai_name
@@ -499,7 +512,9 @@ EOF
     echo "## Final Syntheses" >> "$transcript_file"
     echo "" >> "$transcript_file"
 
-    for ai in claude codex gemini; do
+    local members
+    mapfile -t members < <(get_council_members)
+    for ai in "${members[@]}"; do
         local synthesis_file="$debate_dir/responses/synthesis_${ai}.md"
         if [[ -f "$synthesis_file" ]]; then
             local ai_name

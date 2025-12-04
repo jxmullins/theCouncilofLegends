@@ -7,6 +7,13 @@
 # Get the script directory
 COUNCIL_ROOT="${COUNCIL_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 
+# Source LLM manager for dynamic council membership
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -z "${LLM_MANAGER_LOADED:-}" ]]; then
+    source "$SCRIPT_DIR/llm_manager.sh"
+    export LLM_MANAGER_LOADED=true
+fi
+
 #=============================================================================
 # Default Values (fallbacks if config not loaded)
 #=============================================================================
@@ -284,7 +291,9 @@ suggest_persona_switches() {
     # Get debate context from recent rounds
     local context=""
     local prev_round=$((round - 1))
-    for ai in claude codex gemini; do
+    local members
+    mapfile -t members < <(get_council_members)
+    for ai in "${members[@]}"; do
         local prev_file="$debate_dir/responses/round_${prev_round}_${ai}.md"
         if [[ -f "$prev_file" ]]; then
             local snippet

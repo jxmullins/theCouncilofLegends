@@ -11,19 +11,51 @@ if [[ -z "${UTILS_LOADED:-}" ]]; then
     export UTILS_LOADED=true
 fi
 
+# Source LLM manager for dynamic council membership
+if [[ -z "${LLM_MANAGER_LOADED:-}" ]]; then
+    source "$SCRIPT_DIR/llm_manager.sh"
+    export LLM_MANAGER_LOADED=true
+fi
+
 #=============================================================================
-# Constants
+# Dynamic Member Arrays
 #=============================================================================
 
-# Anonymous IDs for blind peer review
-declare -a ANON_IDS=("AI-A" "AI-B" "AI-C")
+# These arrays are populated dynamically from the LLM registry
+declare -a ANON_IDS=()
+declare -a COUNCIL_MEMBERS=()
+declare -a TEAM_MEMBERS=()
+declare -a TEAM_MEMBERS_WITH_ARBITER=()
 
-# Council member IDs (core debate participants)
-declare -a COUNCIL_MEMBERS=("claude" "codex" "gemini")
+# Refresh member arrays from the LLM registry
+# Call this after any changes to council membership
+refresh_member_arrays() {
+    # Get council members from registry
+    mapfile -t COUNCIL_MEMBERS < <(get_council_members)
 
-# Team member IDs (includes optional arbiter for team mode)
-declare -a TEAM_MEMBERS=("claude" "codex" "gemini")
-declare -a TEAM_MEMBERS_WITH_ARBITER=("claude" "codex" "gemini" "arbiter")
+    # Team members are the same as council members
+    TEAM_MEMBERS=("${COUNCIL_MEMBERS[@]}")
+
+    # Team members with arbiter includes groq if available
+    TEAM_MEMBERS_WITH_ARBITER=("${COUNCIL_MEMBERS[@]}")
+    if get_llm_field "groq" "role" 2>/dev/null | grep -q "arbiter"; then
+        TEAM_MEMBERS_WITH_ARBITER+=("arbiter")
+    fi
+
+    # Generate anonymous IDs dynamically: AI-A, AI-B, AI-C, AI-D, etc.
+    ANON_IDS=()
+    for ((i=0; i<${#COUNCIL_MEMBERS[@]}; i++)); do
+        # Convert index to letter: 0->A, 1->B, 2->C, etc.
+        local letter
+        letter=$(printf '%c' $((65 + i)))
+        ANON_IDS+=("AI-$letter")
+    done
+
+    log_debug "Refreshed member arrays: ${#COUNCIL_MEMBERS[@]} council members"
+}
+
+# Initialize arrays on first load
+refresh_member_arrays
 
 # Persistent baselines directory
 BASELINES_DIR="${COUNCIL_ROOT:-$SCRIPT_DIR/..}/config/baselines"

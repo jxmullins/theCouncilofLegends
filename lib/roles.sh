@@ -7,6 +7,13 @@
 # Get the script directory
 COUNCIL_ROOT="${COUNCIL_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 
+# Source LLM manager for dynamic council membership
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -z "${LLM_MANAGER_LOADED:-}" ]]; then
+    source "$SCRIPT_DIR/llm_manager.sh"
+    export LLM_MANAGER_LOADED=true
+fi
+
 # TOON utility path
 TOON_UTIL="${TOON_UTIL:-$COUNCIL_ROOT/lib/toon_util.py}"
 
@@ -311,7 +318,9 @@ apply_role_assignments_from_plan() {
 get_role_assignments_display() {
     local display=""
 
-    for ai in claude codex gemini arbiter; do
+    local all_llms
+    mapfile -t all_llms < <(get_all_llm_ids)
+    for ai in "${all_llms[@]}"; do
         local role="${ROLE_ASSIGNMENTS[$ai]:-}"
         if [[ -n "$role" ]]; then
             local ai_name role_name

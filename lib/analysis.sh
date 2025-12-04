@@ -8,6 +8,13 @@
 COUNCIL_ROOT="${COUNCIL_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 source "$COUNCIL_ROOT/lib/utils.sh"
 
+# Source LLM manager for dynamic council membership
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -z "${LLM_MANAGER_LOADED:-}" ]]; then
+    source "$SCRIPT_DIR/llm_manager.sh"
+    export LLM_MANAGER_LOADED=true
+fi
+
 #=============================================================================
 # Baseline Storage
 #=============================================================================
@@ -175,7 +182,9 @@ compare_baselines() {
     echo "| AI | Old Score | New Score | Delta |"
     echo "|----|-----------|-----------|-------|"
 
-    for ai in claude codex gemini; do
+    local members
+    mapfile -t members < <(get_council_members)
+    for ai in "${members[@]}"; do
         local old_score new_score delta
         old_score=$(echo "$old_scores" | jq -r ".[] | select(.model_id == \"$ai\") | .overall_score // 0")
         new_score=$(echo "$new_scores" | jq -r ".[] | select(.model_id == \"$ai\") | .overall_score // 0")

@@ -4,6 +4,13 @@
 # Builds prompts and manages context for each debate phase
 #
 
+# Source LLM manager for dynamic council membership
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -z "${LLM_MANAGER_LOADED:-}" ]]; then
+    source "$SCRIPT_DIR/llm_manager.sh"
+    export LLM_MANAGER_LOADED=true
+fi
+
 #=============================================================================
 # Context Summarization (for token efficiency)
 #=============================================================================
@@ -20,7 +27,9 @@ summarize_round() {
 
     # Collect all responses from this round
     local round_content=""
-    for ai in claude codex gemini; do
+    local members
+    mapfile -t members < <(get_council_members)
+    for ai in "${members[@]}"; do
         local response_file="$debate_dir/responses/round_${round}_${ai}.md"
         if [[ -f "$response_file" ]]; then
             local ai_name
@@ -94,7 +103,9 @@ get_previous_context() {
 
     # For round 2, just use full round 1 content (it's the only previous round)
     if [[ "$current_round" -eq 2 ]]; then
-        for ai in claude codex gemini; do
+        local members
+        mapfile -t members < <(get_council_members)
+        for ai in "${members[@]}"; do
             if [[ "$ai" != "$current_ai" ]]; then
                 local response_file="$debate_dir/responses/round_1_${ai}.md"
                 if [[ -f "$response_file" ]]; then
@@ -117,7 +128,9 @@ $response_content
     local prev_round=$((current_round - 1))
 
     # Always include full previous round (most recent)
-    for ai in claude codex gemini; do
+    local members
+    mapfile -t members < <(get_council_members)
+    for ai in "${members[@]}"; do
         if [[ "$ai" != "$current_ai" ]]; then
             local response_file="$debate_dir/responses/round_${prev_round}_${ai}.md"
             if [[ -f "$response_file" ]]; then
@@ -145,7 +158,9 @@ $(cat "$summary_file")
 "
         else
             # Use full content if summary not available or context is small
-            for ai in claude codex gemini; do
+            local members
+            mapfile -t members < <(get_council_members)
+            for ai in "${members[@]}"; do
                 if [[ "$ai" != "$current_ai" ]]; then
                     local response_file="$debate_dir/responses/round_${r}_${ai}.md"
                     if [[ -f "$response_file" ]]; then
@@ -233,7 +248,9 @@ EOF
     if [[ "$include_full" == "true" ]]; then
         # Include all previous rounds in full
         for ((r=1; r<round; r++)); do
-            for ai in claude codex gemini; do
+            local members
+            mapfile -t members < <(get_council_members)
+            for ai in "${members[@]}"; do
                 local response_file="$debate_dir/responses/round_${r}_${ai}.md"
                 if [[ -f "$response_file" ]]; then
                     local ai_name
@@ -413,7 +430,9 @@ $topic
 EOF
 
     # Include each AI's synthesis
-    for ai in claude codex gemini; do
+    local members
+    mapfile -t members < <(get_council_members)
+    for ai in "${members[@]}"; do
         local synthesis_file="$debate_dir/responses/synthesis_${ai}.md"
         if [[ -f "$synthesis_file" ]]; then
             local ai_name

@@ -4,6 +4,13 @@
 # Builds prompts for each phase of SCOTUS-style debate
 #
 
+# Source LLM manager for dynamic council membership
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -z "${LLM_MANAGER_LOADED:-}" ]]; then
+    source "$SCRIPT_DIR/llm_manager.sh"
+    export LLM_MANAGER_LOADED=true
+fi
+
 #=============================================================================
 # Opening Round Prompt (Resolution-aware)
 #=============================================================================
@@ -65,7 +72,9 @@ EOF
 
     # Include all responses from rounds up to current
     for r in $(seq 1 "$round"); do
-        for ai in claude codex gemini; do
+        local members
+        mapfile -t members < <(get_council_members)
+        for ai in "${members[@]}"; do
             local response_file="$debate_dir/responses/round_${r}_${ai}.md"
             if [[ -f "$response_file" ]]; then
                 local ai_name
@@ -132,7 +141,9 @@ build_scotus_rebuttal_prompt() {
 EOF
 
     # Include other AIs' responses from previous round
-    for ai in claude codex gemini; do
+    local members
+    mapfile -t members < <(get_council_members)
+    for ai in "${members[@]}"; do
         if [[ "$ai" != "$current_ai" ]]; then
             local response_file="$debate_dir/responses/round_${prev_round}_${ai}.md"
             if [[ -f "$response_file" ]]; then
