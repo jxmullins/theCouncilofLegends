@@ -1,8 +1,10 @@
 # The Council of Legends
 
-**What happens when you put Claude, Codex, and Gemini in a room together?**
+**What happens when you put multiple AIs in a room together?**
 
-A multi-AI debate and collaboration system that orchestrates structured discussions between frontier AI models. Each AI presents arguments, responds to others, and synthesizes conclusions on any topic you choose.
+A multi-AI debate and collaboration system that orchestrates structured discussions between AI models. Each AI presents arguments, responds to others, and synthesizes conclusions on any topic you choose.
+
+**Now with The Council of Many:** Add your own AIs—local models via Ollama/LM Studio, or any OpenAI-compatible endpoint. Build a council of 2, 5, or 10 AIs. Mix cloud and local models. Your council, your rules.
 
 [![Status: Work In Progress](https://img.shields.io/badge/Status-Work%20In%20Progress-yellow)](TODO.md)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
@@ -17,7 +19,42 @@ A multi-AI debate and collaboration system that orchestrates structured discussi
 
 **Old way:** Ask one AI, get one perspective, wonder if you're missing something.
 
-**Council way:** Three AIs debate the topic, challenge each other's reasoning, then synthesize their conclusions. You get a richer, more nuanced answer.
+**Council way:** Multiple AIs debate the topic, challenge each other's reasoning, then synthesize their conclusions. You get a richer, more nuanced answer.
+
+---
+
+## The Council of Many
+
+Build your own council with any combination of AI models:
+
+```bash
+# Add a local Ollama model
+./council.sh models add llama3 ollama llama3:8b --council
+
+# Add LM Studio model
+./council.sh models add mistral lmstudio mistral-7b --endpoint http://localhost:1234 --council
+
+# Add any OpenAI-compatible API
+./council.sh models add deepseek openai-compatible deepseek-chat \
+    --endpoint https://api.deepseek.com --auth-env DEEPSEEK_API_KEY --council
+
+# See your council
+./council.sh models list
+
+# Mix and match - disable cloud, go full local
+./council.sh models disable claude
+./council.sh models enable llama3
+```
+
+| Provider | Examples | Auth |
+|----------|----------|------|
+| `ollama` | Llama 3, Mistral, Phi, Qwen | None (local) |
+| `lmstudio` | Any GGUF model | None (local) |
+| `openai-compatible` | vLLM, Together AI, Anyscale, LocalAI | API key |
+| `anthropic` | Claude 3.5 Sonnet, Opus, Haiku | API key |
+| `openai` | GPT-4o, o1, o3 | API key |
+| `google` | Gemini 2.5 Flash/Pro | API key |
+| `groq` | Llama 3.3 70B (fast inference) | API key |
 
 ---
 
@@ -67,8 +104,11 @@ A multi-AI debate and collaboration system that orchestrates structured discussi
 
 | Feature | Description |
 |---------|-------------|
-| **Three AI Debaters** | Claude (Anthropic), Codex (OpenAI), Gemini (Google) |
-| **4th AI Arbiter** | Groq/Llama serves as impartial judge for Chief Justice selection and scoring |
+| **Dynamic Council** | Add any number of AIs—2, 5, or 10. Mix cloud and local models. |
+| **Local LLM Support** | Ollama, LM Studio, or any OpenAI-compatible endpoint |
+| **Default Debaters** | Claude (Anthropic), Codex (OpenAI), Gemini (Google) |
+| **4th AI Arbiter** | Groq/Llama serves as impartial judge for Chief Justice selection |
+| **Model Management** | CLI to add, remove, enable, disable, update, and test models |
 | **Debate Modes** | Collaborative, Adversarial, Exploratory, SCOTUS (judicial) |
 | **Team Collaboration** | AIs work together on tasks with a PM coordinating |
 | **Persona System** | Assign personalities (philosopher, hacker, scientist, etc.) |
@@ -80,9 +120,11 @@ A multi-AI debate and collaboration system that orchestrates structured discussi
 
 ## Prerequisites
 
-### Required CLI Tools
+### Required: At Least 2 AIs
 
-Install and authenticate each AI's CLI:
+You need at least 2 AIs to run a debate. Choose from cloud APIs or local models:
+
+**Option A: Cloud APIs (Default Setup)**
 
 ```bash
 # Claude CLI (Anthropic)
@@ -98,6 +140,25 @@ npm install -g @anthropic/gemini-cli
 gemini auth login
 ```
 
+**Option B: Local Models (No API Keys Needed)**
+
+```bash
+# Install Ollama (https://ollama.ai)
+brew install ollama   # macOS
+ollama pull llama3    # Download a model
+
+# Add to council
+./council.sh models add llama3 ollama llama3 --council
+./council.sh models add phi ollama phi3 --council
+
+# Disable cloud models if desired
+./council.sh models disable claude codex gemini
+```
+
+**Option C: Mix Both**
+
+Use cloud APIs for some members, local models for others. The system handles routing automatically.
+
 ### Optional: 4th AI Arbiter (Groq)
 
 The arbiter is an impartial 4th AI (Groq/Llama) that doesn't participate in debates but:
@@ -109,15 +170,50 @@ The arbiter is an impartial 4th AI (Groq/Llama) that doesn't participate in deba
 export GROQ_API_KEY="your-groq-api-key"
 ```
 
+### Required: jq
+
+JSON processing is required for API responses:
+
+```bash
+brew install jq      # macOS
+apt install jq       # Debian/Ubuntu
+```
+
 ### Verify Setup
 
 ```bash
-./test_adapters.sh
+./council.sh models test    # Test all registered models
+./test_adapters.sh          # Legacy adapter test
 ```
 
 ---
 
 ## Usage
+
+### Model Management
+
+```bash
+./council.sh models <command>
+
+Commands:
+    list              List all registered models
+    add               Add a new model (interactive wizard)
+    add <id> <provider> <model> [options]
+                      Add a model directly
+    update <id>       Update model configuration
+    remove <id>       Remove a model from registry
+    enable <id>       Add model to council
+    disable <id>      Remove model from council
+    test [id]         Test model connectivity
+    info <id>         Show model details
+
+Add Options:
+    --name NAME       Display name
+    --endpoint URL    API endpoint (required for openai-compatible)
+    --auth-env VAR    Environment variable containing API key
+    --context N       Context window size
+    --council         Enable as council member immediately
+```
 
 ### Debates
 
@@ -128,7 +224,7 @@ Options:
     --mode MODE        collaborative, adversarial, exploratory, scotus
     --rounds N         Number of rounds (2-10, default: 3)
     --personas SPEC    claude:philosopher,codex:hacker,gemini:scientist
-    --chief-justice AI Force specific CJ (claude, codex, gemini)
+    --chief-justice AI Force specific CJ (any council member ID)
     --no-cj            Skip Chief Justice selection
     --verbose          Enable debug logging
     --list-personas    Show available personas
@@ -185,7 +281,16 @@ projects/20241201_123456_build-api/
 - [x] Work modes (pair programming, divide & conquer, etc.)
 - [x] Role assignment system
 
-### Recently Completed
+### The Council of Many (v2.0)
+- [x] Dynamic council membership (any number of AIs)
+- [x] Local LLM support (Ollama, LM Studio)
+- [x] Generic OpenAI-compatible endpoint support
+- [x] CLI model management (add, remove, enable, disable, update, test)
+- [x] Provider-based dispatcher routing
+- [x] Security hardening (input validation, SSRF protection, file locking)
+- [x] Backward compatibility with existing 3-AI setup
+
+### Previously Completed
 - [x] Safe configuration loading (security fix)
 - [x] Robust argument parsing
 - [x] Dependency validation
@@ -196,7 +301,6 @@ projects/20241201_123456_build-api/
 
 ### In Progress
 - [ ] Externalize prompt templates to `templates/prompts/`
-- [ ] Dynamic model registry integration
 - [ ] Interactive first-run setup wizard
 
 ### Planned
@@ -204,6 +308,7 @@ projects/20241201_123456_build-api/
 - [ ] Structured telemetry and replay logs
 - [ ] Mini-questionnaires for specialized topics
 - [ ] Unified logging system
+- [ ] Parallel council invocation (performance)
 
 See [TODO.md](TODO.md) for the full improvement plan.
 
@@ -235,15 +340,21 @@ INCLUDE_FULL_HISTORY=false
 
 ```
 theCouncilofLegends/
-  council.sh          # Debate entry point
+  council.sh          # Main entry point (debates + model management)
   team.sh             # Team collaboration entry point
   assess.sh           # Baseline assessment tool
   config/
     council.conf      # Configuration
+    llms.toon         # LLM registry (models, providers, endpoints)
     personas/         # Debate personas (TOON/JSON)
     roles/            # Team role definitions
   lib/
-    adapters/         # AI CLI adapters
+    adapters/         # AI provider adapters
+      ollama_adapter.sh         # Ollama local LLMs
+      lmstudio_adapter.sh       # LM Studio local LLMs
+      openai_compatible_adapter.sh  # Generic OpenAI API
+    cli_commands.sh   # Model management CLI
+    dispatcher.sh     # Provider-based AI routing
     llm_manager.sh    # LLM registry management
     analysis.sh       # Trend analysis
     debate.sh         # Debate orchestration
